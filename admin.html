@@ -1,0 +1,21 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Painel | London Imports</title><link rel="icon" href="img/logo.jpeg">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"></head><body>
+<header><div class="wrap"><div class="top"><img src="img/logo.jpeg" alt=""><span class="brand">PAINEL</span><a class="btn ghost" style="padding:10px 16px" href="index.html">Ver loja</a><button class="btn ghost" style="padding:10px 16px" id="out" hidden>Sair</button></div></div></header>
+<main class="wrap">
+<section class="box" id="login" style="max-width:420px;margin:60px auto"><h2>Entrar</h2><div class="f" style="margin-top:16px"><label class="full">E-mail<input id="em" type="email" autocomplete="username" maxlength="120"></label><label class="full">Senha<input id="pw" type="password" autocomplete="current-password" maxlength="128"></label><button class="btn full" id="go">Entrar</button><p class="msg full" id="lm"></p></div></section>
+<div id="app" hidden>
+<section class="box"><h2 id="ft">Novo produto</h2><form class="f" id="form" style="margin-top:16px">
+<label class="full">Nome<input id="name" required maxlength="120"></label><label>Marca<input id="brand" maxlength="60"></label><label>Seção<select id="category"><option>Relógios</option><option>Perfumes</option><option>Tênis</option></select></label>
+<label>Preço (R$)<input id="price" type="number" step="0.01" min="0" max="1000000" required></label><label>Preço antigo (opcional)<input id="old_price" type="number" step="0.01" min="0" max="1000000"></label>
+<label class="full">Tamanhos (separe por vírgula)<input id="sizes" placeholder="38, 39, 40, 41"></label>
+<label class="full">Descrição<textarea id="description" rows="3" maxlength="2000"></textarea></label>
+<label class="full">Foto<input id="file" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<label><span><input id="featured" type="checkbox" style="width:auto"> Destaque</span></label><label><span><input id="popular" type="checkbox" style="width:auto"> Mais pedido</span></label><label><span><input id="active" type="checkbox" checked style="width:auto"> Visível na loja</span></label>
+<button class="btn">Salvar produto</button><button type="button" class="btn ghost" id="cancel" hidden>Cancelar edição</button><p class="msg full" id="msg"></p></form></section>
+<section class="box"><h2>Produtos</h2><div id="list"></div></section>
+<section class="box"><h2>Loja</h2><div class="f" style="margin-top:16px"><label>WhatsApp (com DDI, só números)<input id="s_wa" placeholder="5511999999999"></label><label>Instagram<input id="s_ig"></label><button class="btn" id="s_save">Salvar loja</button><p class="msg" id="s_msg"></p></div></section>
+</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script><script src="js/util.js"></script><script src="js/admin.js"></script></body></html>

@@ -1,0 +1,6 @@
+.env
+.env.*
+*.pem
+node_modules/
+.vercel/
+service_role*
