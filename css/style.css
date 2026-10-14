@@ -108,3 +108,9 @@ dialog{width:100%;max-width:100%;margin:auto 0 0;border-bottom:0}
 body.filtered .hero,body.filtered .tick{display:none}body.filtered .sec{margin-top:34px}
 .home{display:flex;align-items:center;gap:14px;text-decoration:none}
 .sec{justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
+.gal{min-width:0}.th{display:flex;gap:8px;padding:10px;overflow-x:auto}
+.th i{flex:none;width:58px;height:58px;background:#1c1710 center/cover;border:1px solid var(--line);cursor:pointer}.th i.on{border-color:var(--gold)}
+.thumbs{display:flex;gap:10px;flex-wrap:wrap}
+.thumbs div{position:relative;width:76px;height:76px;background:#1c1710 center/cover;border:1px solid var(--line);cursor:pointer}.thumbs div.cover{border-color:var(--gold)}
+.thumbs b{position:absolute;top:0;right:0;background:#000c;color:#fff;width:24px;height:24px;text-align:center;line-height:24px}
+.thumbs small{position:absolute;bottom:0;left:0;right:0;background:var(--gold);color:#1a1405;font:700 10px Figtree;text-align:center}
