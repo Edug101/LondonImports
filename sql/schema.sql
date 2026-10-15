@@ -11,6 +11,7 @@ alter table public.products add column if not exists popular boolean default fal
 alter table public.products add column if not exists whatsapp text;
 alter table public.products add column if not exists images text[] default '{}';
 alter table public.products add column if not exists pix_key text;
+alter table public.products add column if not exists sold boolean default false;
 update public.products set images = array[image_url] where image_url is not null and coalesce(array_length(images,1),0) = 0;
 create table if not exists public.settings (
   id int primary key default 1 check (id = 1),

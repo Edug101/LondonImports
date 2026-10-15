@@ -120,3 +120,8 @@ body.filtered .hero,body.filtered .tick{display:none}body.filtered .sec{margin-t
 .pix img{width:220px;height:220px;image-rendering:pixelated;background:#fff}
 .pix code{word-break:break-all;color:var(--gold2);font-size:14px}
 .pix .pb{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.pix small{color:var(--mute)}
+.card.sold .ph,.card.sold .inf{opacity:.45;filter:grayscale(.7)}
+.card.sold:hover{background:var(--line)}
+.band{position:absolute;left:-44px;top:26px;width:190px;transform:rotate(-35deg);background:#c0392b;color:#fff;text-align:center;font:800 15px "Big Shoulders Display";letter-spacing:.18em;text-transform:uppercase;padding:5px 0;z-index:2;box-shadow:0 2px 8px #0008}
+.soldmsg{border:1px solid #c0392b;color:#ff8a7a;text-align:center;padding:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.soldmsg[hidden]{display:none}
