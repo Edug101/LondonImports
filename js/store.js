@@ -10,7 +10,7 @@ async function init(){
   $("nav").onclick=e=>{const c=e.target.dataset.c;if(!c)return;cat=c;[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.c===cat));$("st").textContent=e.target.textContent.replace(" 🔥","");draw();view();scrollTo(0,0)};
   $("seecat").onclick=e=>{e.preventDefault();document.querySelector('#nav [data-c="Todos"]').click()};
   $("q").oninput=()=>{draw();view();scrollTo(0,0)};
-  const [p,s]=await Promise.all([db.from("products").select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,featured,popular").eq("active",true).order("featured",{ascending:false}).order("created_at",{ascending:false}),db.from("settings").select("whatsapp,instagram").eq("id",1).single()]);
+  const [p,s]=await Promise.all([db.from("products").select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,pix_key,featured,popular").eq("active",true).order("featured",{ascending:false}).order("created_at",{ascending:false}),db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id",1).single()]);
   if(p.error){all=[];$("grid").innerHTML='<p class="empty">Catálogo indisponível. Confira a URL e a anon key em js/config.js.</p>';return}
   all=p.data;if(s.data)cfg=s.data;
   $("wpp").href=wa("Olá! Vim pelo site da London Imports.");
@@ -38,6 +38,12 @@ function openP(x){
   $("m-s").innerHTML=(x.sizes||[]).map(s=>`<button class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join("");
   const upd=()=>$("m-buy").href=wa(`Olá! Tenho interesse em: ${x.name}${size?" (tam. "+size+")":""} - ${money(x.price)}`,x.whatsapp);upd();
   $("m-s").onclick=e=>{if(e.target.dataset.s){size=e.target.dataset.s;[...$("m-s").children].forEach(b=>b.classList.toggle("on",b.dataset.s===size));upd()}};
+  const pk=pixKey(x.pix_key)||pixKey(cfg.pix_key);$("m-pix").hidden=true;$("m-pixb").hidden=!pk;
+  $("m-pixb").onclick=()=>{if(!$("m-pix").hidden){$("m-pix").hidden=true;return}
+    const pay=pixPayload(pk,cfg.pix_name,cfg.pix_city,Number(x.price));let qr="";
+    try{const q=qrcode(0,"M");q.addData(pay);q.make();qr=`<img src="${q.createDataURL(6,3)}" alt="QR Code Pix">`}catch(err){qr='<small>Não foi possível gerar o QR Code. Use a chave abaixo.</small>'}
+    $("m-pix").innerHTML=qr+`<small>Valor: ${money(x.price)}</small><code>${esc(pk)}</code><div class="pb"><button class="chip" id="cp1">Copiar chave</button><button class="chip" id="cp2">Pix copia e cola</button></div><small>Depois de pagar, envie o comprovante no WhatsApp.</small>`;
+    const cp=(id,t)=>{$(id).onclick=async()=>{try{await navigator.clipboard.writeText(t);$(id).textContent="Copiado!"}catch(e){}}};cp("cp1",pk);cp("cp2",pay);$("m-pix").hidden=false};
   dlg.showModal();
 }
 init();

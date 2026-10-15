@@ -8,6 +8,10 @@ create table if not exists public.products (
   created_at timestamptz default now()
 );
 alter table public.products add column if not exists popular boolean default false;
+alter table public.products add column if not exists whatsapp text;
+alter table public.products add column if not exists images text[] default '{}';
+alter table public.products add column if not exists pix_key text;
+update public.products set images = array[image_url] where image_url is not null and coalesce(array_length(images,1),0) = 0;
 create table if not exists public.settings (
   id int primary key default 1 check (id = 1),
   store_name text default 'London Imports',
@@ -15,6 +19,10 @@ create table if not exists public.settings (
   instagram text default ''
 );
 insert into public.settings (id) values (1) on conflict do nothing;
+alter table public.settings add column if not exists pix_key text;
+alter table public.settings add column if not exists pix_name text default 'LONDON IMPORTS';
+alter table public.settings add column if not exists pix_city text default 'SAO PAULO';
+update public.settings set pix_key = 'ce079db1-ab26-4605-a97c-49c092e0caf7' where id = 1 and pix_key is null;
 create table if not exists public.admins (email text primary key);
 
 alter table public.products enable row level security;
@@ -34,6 +42,9 @@ revoke all on public.products, public.settings from anon;
 grant select on public.products, public.settings to anon;
 revoke all on public.admins from anon, authenticated;
 
+create or replace function public.all_https(a text[]) returns boolean
+language sql immutable set search_path = '' as $$ select coalesce(bool_and(i ~ '^https://'), true) from unnest(a) i $$;
+
 -- Regras de validação no banco
 alter table public.products drop constraint if exists products_ck;
 alter table public.products add constraint products_ck check (
@@ -42,10 +53,15 @@ alter table public.products add constraint products_ck check (
   and price >= 0 and price <= 1000000 and (old_price is null or (old_price >= 0 and old_price <= 1000000))
   and coalesce(array_length(sizes,1),0) <= 30
   and (image_url is null or image_url ~ '^https://')
+  and (whatsapp is null or whatsapp ~ '^[0-9]{10,15}$')
+  and (pix_key is null or pix_key ~ '^[A-Za-z0-9@.+_-]{5,77}$')
+  and coalesce(array_length(images,1),0) <= 12 and public.all_https(images)
   and coalesce(category,'') in ('','Relógios','Perfumes','Tênis')) not valid;
 alter table public.settings drop constraint if exists settings_ck;
 alter table public.settings add constraint settings_ck check (
-  whatsapp ~ '^[0-9]{10,15}$' and coalesce(instagram,'') ~ '^[A-Za-z0-9._]{0,30}$') not valid;
+  whatsapp ~ '^[0-9]{10,15}$' and coalesce(instagram,'') ~ '^[A-Za-z0-9._]{0,30}$'
+  and (pix_key is null or pix_key ~ '^[A-Za-z0-9@.+_-]{5,77}$')
+  and coalesce(pix_name,'') ~ '^[A-Za-z0-9 ]{0,25}$' and coalesce(pix_city,'') ~ '^[A-Za-z0-9 ]{0,15}$') not valid;
 
 -- Políticas (apaga as antigas e cria as novas)
 drop policy if exists "ler produtos ativos" on public.products;

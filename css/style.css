@@ -115,3 +115,8 @@ body.filtered .hero,body.filtered .tick{display:none}body.filtered .sec{margin-t
 .thumbs b{position:absolute;top:0;right:0;background:#000c;color:#fff;width:24px;height:24px;text-align:center;line-height:24px}
 .thumbs small{position:absolute;bottom:0;left:0;right:0;background:var(--gold);color:#1a1405;font:700 10px Figtree;text-align:center}
 @media(max-width:820px){.home{margin-right:auto}}
+.btn[hidden],.pix[hidden]{display:none}
+.pix{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;border:1px dashed var(--gold);text-align:center}
+.pix img{width:220px;height:220px;image-rendering:pixelated;background:#fff}
+.pix code{word-break:break-all;color:var(--gold2);font-size:14px}
+.pix .pb{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.pix small{color:var(--mute)}
