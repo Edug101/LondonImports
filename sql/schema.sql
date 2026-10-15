@@ -11,7 +11,13 @@ alter table public.products add column if not exists popular boolean default fal
 alter table public.products add column if not exists whatsapp text;
 alter table public.products add column if not exists images text[] default '{}';
 alter table public.products add column if not exists pix_key text;
-alter table public.products add column if not exists sold boolean default false;
+alter table public.products add column if not exists stock integer default 1;
+do $$ begin
+  if exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='sold') then
+    execute 'update public.products set stock = 0 where sold = true';
+    execute 'alter table public.products drop column sold';
+  end if;
+end $$;
 update public.products set images = array[image_url] where image_url is not null and coalesce(array_length(images,1),0) = 0;
 create table if not exists public.settings (
   id int primary key default 1 check (id = 1),
@@ -56,6 +62,7 @@ alter table public.products add constraint products_ck check (
   and (image_url is null or image_url ~ '^https://')
   and (whatsapp is null or whatsapp ~ '^[0-9]{10,15}$')
   and (pix_key is null or pix_key ~ '^[A-Za-z0-9@.+_-]{5,77}$')
+  and coalesce(stock,0) between 0 and 100000
   and coalesce(array_length(images,1),0) <= 12 and public.all_https(images)
   and coalesce(category,'') in ('','Relógios','Perfumes','Tênis')) not valid;
 alter table public.settings drop constraint if exists settings_ck;

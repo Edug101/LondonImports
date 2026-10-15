@@ -125,3 +125,4 @@ body.filtered .hero,body.filtered .tick{display:none}body.filtered .sec{margin-t
 .band{position:absolute;left:-44px;top:26px;width:190px;transform:rotate(-35deg);background:#c0392b;color:#fff;text-align:center;font:800 15px "Big Shoulders Display";letter-spacing:.18em;text-transform:uppercase;padding:5px 0;z-index:2;box-shadow:0 2px 8px #0008}
 .soldmsg{border:1px solid #c0392b;color:#ff8a7a;text-align:center;padding:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .soldmsg[hidden]{display:none}
+.stkmsg{color:var(--gold2);font-size:14px;font-weight:600;letter-spacing:.04em}.stkmsg[hidden]{display:none}

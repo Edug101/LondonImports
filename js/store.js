@@ -1,6 +1,7 @@
 let all=[],cat="home",cfg={whatsapp:"",instagram:""},size="";
 const $=id=>document.getElementById(id);
 const wa=(t,n)=>`https://wa.me/${digits(n||cfg.whatsapp)}?text=${encodeURIComponent(t)}`;
+const out=x=>Number(x.stock??1)<=0;
 const bg=u=>{const s=safeUrl(u);return s?`url('${s}')`:"none"};
 $("tk").innerHTML=("IMPORTADOS ORIGINAIS &nbsp;✦&nbsp; DO MUNDO PARA VOCÊ &nbsp;✦&nbsp; ENTREGA COM ACOMPANHAMENTO &nbsp;✦&nbsp; ".repeat(6));
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.1});
@@ -10,7 +11,7 @@ async function init(){
   $("nav").onclick=e=>{const c=e.target.dataset.c;if(!c)return;cat=c;[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.c===cat));$("st").textContent=e.target.textContent.replace(" 🔥","");draw();view();scrollTo(0,0)};
   $("seecat").onclick=e=>{e.preventDefault();document.querySelector('#nav [data-c="Todos"]').click()};
   $("q").oninput=()=>{draw();view();scrollTo(0,0)};
-  const [p,s]=await Promise.all([db.from("products").select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,pix_key,featured,popular,sold").eq("active",true).order("featured",{ascending:false}).order("created_at",{ascending:false}),db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id",1).single()]);
+  const [p,s]=await Promise.all([db.from("products").select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,pix_key,featured,popular,stock").eq("active",true).order("featured",{ascending:false}).order("created_at",{ascending:false}),db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id",1).single()]);
   if(p.error){all=[];$("grid").innerHTML='<p class="empty">Catálogo indisponível. Confira a URL e a anon key em js/config.js.</p>';return}
   all=p.data;if(s.data)cfg=s.data;
   $("wpp").href=wa("Olá! Vim pelo site da London Imports.");
@@ -23,7 +24,7 @@ function draw(){
   const q=$("q").value.toLowerCase();
   const l=all.filter(x=>(cat==="Todos"||cat==="home"||(cat==="pop"?x.popular:x.category===cat))&&(x.name+" "+(x.brand||"")).toLowerCase().includes(q));
   $("cnt").textContent=l.length+(l.length===1?" item":" itens");
-  $("grid").innerHTML=l.length?l.map(x=>`<button class="card${x.sold?" sold":""}" data-id="${esc(x.id)}"><span class="c"><span class="ph" style="background-image:${bg(x.image_url)}"><i></i>${x.sold?'<span class="band">Vendido</span>':""}${x.popular&&!x.sold?'<span class="tag pop">Mais pedido</span>':x.old_price>x.price?'<span class="tag">Oferta</span>':""}</span><span class="inf"><small>${esc(x.brand)}</small><h3>${esc(x.name)}</h3>${x.old_price>x.price?`<span class="old">${money(x.old_price)}</span>`:""}<span class="price">${money(x.price)}</span></span></span></button>`).join(""):'<p class="empty">Nenhum produto nesta seção ainda.</p>';
+  $("grid").innerHTML=l.length?l.map(x=>`<button class="card${out(x)?" sold":""}" data-id="${esc(x.id)}"><span class="c"><span class="ph" style="background-image:${bg(x.image_url)}"><i></i>${out(x)?'<span class="band">Esgotado</span>':""}${x.popular&&!out(x)?'<span class="tag pop">Mais pedido</span>':x.old_price>x.price?'<span class="tag">Oferta</span>':""}</span><span class="inf"><small>${esc(x.brand)}</small><h3>${esc(x.name)}</h3>${x.old_price>x.price?`<span class="old">${money(x.old_price)}</span>`:""}<span class="price">${money(x.price)}</span></span></span></button>`).join(""):'<p class="empty">Nenhum produto nesta seção ainda.</p>';
   document.querySelectorAll(".card").forEach(c=>io.observe(c));
 }
 $("grid").onclick=e=>{const c=e.target.closest(".card");if(c)openP(all.find(x=>x.id===c.dataset.id))};
@@ -38,8 +39,9 @@ function openP(x){
   $("m-s").innerHTML=(x.sizes||[]).map(s=>`<button class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join("");
   const upd=()=>$("m-buy").href=wa(`Olá! Tenho interesse em: ${x.name}${size?" (tam. "+size+")":""} - ${money(x.price)}`,x.whatsapp);upd();
   $("m-s").onclick=e=>{if(e.target.dataset.s){size=e.target.dataset.s;[...$("m-s").children].forEach(b=>b.classList.toggle("on",b.dataset.s===size));upd()}};
-  const pk=pixKey(x.pix_key)||pixKey(cfg.pix_key);$("m-pix").hidden=true;$("m-pixb").hidden=!pk||!!x.sold;
-  $("m-buy").hidden=!!x.sold;$("m-sold").hidden=!x.sold;
+  const pk=pixKey(x.pix_key)||pixKey(cfg.pix_key);$("m-pix").hidden=true;$("m-pixb").hidden=!pk||out(x);
+  $("m-buy").hidden=out(x);$("m-sold").hidden=!out(x);
+  const st=Number(x.stock??1);$("m-stk").hidden=!(st>0&&st<=5);$("m-stk").textContent=st===1?"Resta apenas 1 unidade":"Restam "+st+" unidades";
   $("m-pixb").onclick=()=>{if(!$("m-pix").hidden){$("m-pix").hidden=true;return}
     const pay=pixPayload(pk,cfg.pix_name,cfg.pix_city,Number(x.price));let qr="";
     try{const q=qrcode(0,"M");q.addData(pay);q.make();qr=`<img src="${q.createDataURL(6,3)}" alt="QR Code Pix">`}catch(err){qr='<small>Não foi possível gerar o QR Code. Use a chave abaixo.</small>'}
