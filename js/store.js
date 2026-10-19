@@ -2,6 +2,7 @@ let all=[],cat="home",cfg={whatsapp:"",instagram:""},size="";
 const $=id=>document.getElementById(id);
 const wa=(t,n)=>`https://wa.me/${digits(n||cfg.whatsapp)}?text=${encodeURIComponent(t)}`;
 const out=x=>Number(x.stock??1)<=0;
+const fit=(el,u,mob)=>{el.style.aspectRatio="";const s=safeUrl(u);if(!s||(mob&&!matchMedia("(max-width:820px)").matches))return;const im=new Image();im.onload=()=>{if(im.naturalWidth)el.style.aspectRatio=Math.min(1.25,Math.max(.75,im.naturalWidth/im.naturalHeight)).toFixed(3)};im.src=s};
 const bg=u=>{const s=safeUrl(u);return s?`url('${s}')`:"none"};
 $("tk").innerHTML=("IMPORTADOS ORIGINAIS &nbsp;✦&nbsp; DO MUNDO PARA VOCÊ &nbsp;✦&nbsp; ENTREGA COM ACOMPANHAMENTO &nbsp;✦&nbsp; ".repeat(6));
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.1});
@@ -17,7 +18,7 @@ async function init(){
   $("wpp").href=wa("Olá! Vim pelo site da London Imports.");
   if(handle(cfg.instagram)){const u=handle(cfg.instagram);$("ig").innerHTML=`· <a href="https://instagram.com/${u}">@${u}</a>`}
   const f=all.find(x=>x.featured&&x.image_url);
-  if(f){$("feat").classList.remove("fb");$("fimg").innerHTML="";$("fimg").style.backgroundImage=bg(f.image_url);$("feat").onclick=()=>openP(f);$("cap").hidden=false;$("cap").innerHTML=`<small>Lançamento exclusivo</small><b>${esc(f.name)}</b><span class="price">${money(f.price)}</span>`}
+  if(f){$("feat").classList.remove("fb");$("fimg").innerHTML="";$("fimg").style.backgroundImage=bg(f.image_url);fit($("fimg"),f.image_url,false);$("feat").onclick=()=>openP(f);$("cap").hidden=false;$("cap").innerHTML=`<small>Lançamento exclusivo</small><b>${esc(f.name)}</b><span class="price">${money(f.price)}</span>`}
   draw();
 }
 function draw(){
@@ -30,7 +31,7 @@ function draw(){
 $("grid").onclick=e=>{const c=e.target.closest(".card");if(c)openP(all.find(x=>x.id===c.dataset.id))};
 function openP(x){
   size="";const g=x.images&&x.images.length?x.images:(x.image_url?[x.image_url]:[]);
-  const show=i=>{$("m-ph").style.backgroundImage=bg(g[i]);[...$("m-th").children].forEach((t,k)=>t.classList.toggle("on",k===i))};
+  const show=i=>{$("m-ph").style.backgroundImage=bg(g[i]);fit($("m-ph"),g[i],true);[...$("m-th").children].forEach((t,k)=>t.classList.toggle("on",k===i))};
   $("m-th").innerHTML=g.length>1?g.map((u,i)=>`<i data-i="${i}" style="background-image:${bg(u)}"></i>`).join(""):"";
   $("m-th").onclick=e=>{if(e.target.dataset.i!==undefined)show(+e.target.dataset.i)};show(0);
   $("m-b").textContent=x.brand||"";$("m-n").textContent=x.name;

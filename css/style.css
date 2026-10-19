@@ -142,3 +142,7 @@ dialog{overflow-x:hidden}
 .card .ph i{background-color:transparent}
 .card .price,.card .old{white-space:nowrap;overflow-wrap:normal}
 .card .inf .old{display:block}
+/* fundo desfocado claro: some quando a foto tem fundo branco */
+.card .ph::before,.md .ph::before,.feat .img::before{filter:blur(28px) brightness(1.05) saturate(1.1)}
+.feat .img,.md .ph{min-height:0}
+.card .ph{aspect-ratio:4/5}
