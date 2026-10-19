@@ -333,7 +333,7 @@
     $("#bag-f").hidden = !ls.length;
     $("#bag-items").innerHTML = ls.length ? ls.map((b) => `
       <div class="bi" data-key="${esc(b.key)}">
-        <img src="${pics(b.p)[0] || "img/logo.jpeg"}" alt="">
+        <img src="${pics(b.p)[0] || "img/logo.png"}" alt="">
         <div>
           <h3>${esc(b.p.name)}</h3>
           ${b.size ? `<span class="sz">Tamanho ${esc(b.size)}</span>` : ""}
