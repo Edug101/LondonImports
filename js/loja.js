@@ -81,11 +81,14 @@
 
   // ---------- abas ----------
   function renderTabs() {
-    // mesmas seções do menu antigo da loja; aparecem mesmo vazias
-    const items = [["Todos", "Catálogo", all.length]];
-    SECTIONS.forEach((s) => items.push([s, s, all.filter((x) => x.category === s).length]));
+    // ordem pedida pela loja: Mais pedidos, Relógios, Catálogo, Perfumes
+    const n = (s) => all.filter((x) => x.category === s).length;
+    const items = [];
     const np = all.filter((x) => x.popular).length;
     if (np) items.push(["pop", "Mais pedidos", np]);
+    items.push(["Relógios", "Relógios", n("Relógios")], ["Todos", "Catálogo", all.length], ["Perfumes", "Perfumes", n("Perfumes")]);
+    // Tênis só aparece se algum tênis for cadastrado no painel
+    if (n("Tênis")) items.push(["Tênis", "Tênis", n("Tênis")]);
     $("#tabs").innerHTML = items.map(([v, l, n]) =>
       `<button class="tab" data-tab="${esc(v)}" aria-pressed="${v === tab}">${esc(l)}<small>${n}</small></button>`
     ).join("") + `<span class="tab-ind" id="tab-ind" aria-hidden="true"></span>`;
@@ -96,6 +99,10 @@
     if (!on || !ind) return;
     ind.style.width = on.offsetWidth + "px";
     ind.style.transform = `translateX(${on.offsetLeft}px)`;
+    // no celular, só rola as abas se a escolhida estiver fora da tela
+    const tabs = $("#tabs");
+    const l = on.offsetLeft, r = l + on.offsetWidth;
+    if (l < tabs.scrollLeft || r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollTo({ left: l - (tabs.clientWidth - on.offsetWidth) / 2, behavior: reduce ? "auto" : "smooth" });
   }
 
   // ---------- grade ----------
