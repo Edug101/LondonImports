@@ -1,18 +1,213 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0a0908">
-<title>London Imports | Do mundo para você</title><link rel="icon" href="img/logo.jpeg">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css"></head><body>
-<header><div class="wrap"><div class="top"><a class="home" href="index.html"><img src="img/logo.jpeg" alt=""><span class="brand">London Imports</span></a>
-<nav id="nav"><button data-c="pop" class="hot">Mais pedidos 🔥</button><button data-c="Relógios">Relógios</button><button data-c="Perfumes">Perfumes</button><button data-c="Todos">Catálogo</button></nav>
-<label class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Buscar produto..." aria-label="Buscar produto"></label>
-<a class="ic" href="admin.html" aria-label="Entrar no painel"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg></a></div></div></header>
-<main class="wrap">
-<section class="hero"><div><span class="tagl">Importados originais</span><h1><span class="ln"><span>Do mundo</span></span><span class="ln"><span>para você.</span></span></h1><p>Tênis, relógios e perfumes importados, escolhidos um a um. Escolha no catálogo e feche o pedido direto no WhatsApp.</p><a class="btn" id="seecat" href="#catalogo">Ver catálogo</a></div>
-<div class="feat fb" id="feat"><div class="img" id="fimg"><svg class="orb" viewBox="0 0 400 260" fill="none" aria-hidden="true"><g class="spin"><circle cx="200" cy="130" r="110" stroke="#d8b25c55"/><ellipse cx="200" cy="130" rx="50" ry="110" stroke="#d8b25c33"/><ellipse cx="200" cy="130" rx="110" ry="40" stroke="#d8b25c33"/></g><path class="rt" d="M40 210C140 250 310 170 360 50" stroke="currentColor" stroke-width="2"/><path d="M360 50l-15 3 5 9z" fill="currentColor"/></svg></div><div class="cap" id="cap" hidden></div></div></section></main>
-<div class="tick" aria-hidden="true"><div id="tk"></div></div>
-<main class="wrap"><section id="catalogo"><div class="sec"><h2 id="st">Catálogo</h2><span id="cnt"></span></div><div class="grid" id="grid"></div></section></main>
-<dialog id="dlg"><button class="x" aria-label="Fechar">×</button><div class="md"><div class="gal"><div class="ph" id="m-ph"></div><div class="th" id="m-th"></div></div><div class="in"><small id="m-b"></small><h2 id="m-n"></h2><div id="m-p"></div><p id="m-d"></p><div class="sizes" id="m-s"></div><p class="stkmsg" id="m-stk" hidden></p><a class="btn" id="m-buy" href="#" target="_blank" rel="noopener">Comprar pelo WhatsApp</a><p class="soldmsg" id="m-sold" hidden>Este item está esgotado.</p><button class="btn ghost" id="m-pixb" hidden>Pagar pelo site</button><div class="pix" id="m-pix" hidden></div></div></div></dialog>
-<a class="wpp" id="wpp" href="#" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm5.200 14.200c-.2.600-1.300 1.200-1.800 1.200-.5.100-1 .2-3.300-.7-2.800-1.100-4.600-4-4.700-4.200-.1-.2-1.100-1.500-1.100-2.800s.7-2 1-2.300c.2-.3.500-.3.700-.3h.5c.2 0 .4 0 .6.500l.8 2c.1.200.1.400 0 .5l-.4.600c-.1.200-.3.300-.1.600.2.300.8 1.300 1.700 2.100 1.200 1 2.100 1.300 2.400 1.500.3.100.5.100.6-.1l.9-1.100c.2-.3.400-.2.600-.1l1.900.9c.3.100.5.200.5.300.1.100.1.600-.1 1.200z"/></svg></a>
-<footer>London Imports · Do mundo para você <span id="ig"></span></footer>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f3ee">
+<title>London Imports | Relógios, perfumes e tênis importados</title>
+<meta name="description" content="Relógios, perfumes e tênis importados e originais. Escolha no site e finalize pelo WhatsApp ou no Pix.">
+<link rel="icon" href="img/logo.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/loja.css">
+</head>
+<body>
+
+<a class="skip" href="#produtos">Pular para os produtos</a>
+
+<div class="bar">Produtos originais <span aria-hidden="true">·</span> Pagamento no Pix <span aria-hidden="true">·</span> Atendimento direto no WhatsApp</div>
+
+<header class="hd" id="hd">
+  <div class="hd-in">
+    <a class="brand" href="#" aria-label="London Imports, início">
+      <img src="img/logo.jpeg" alt="" width="40" height="40">
+      <span>London Imports</span>
+    </a>
+    <label class="hd-search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input id="q" type="search" placeholder="Buscar por nome ou marca" autocomplete="off" aria-label="Buscar produtos">
+    </label>
+    <nav class="hd-act" aria-label="Conta e sacola">
+      <a class="hd-link" id="login-btn" href="admin.html">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>
+        <span id="login-label">Entrar</span>
+      </a>
+      <button class="hd-link bag-btn" id="open-bag" aria-label="Abrir sacola">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="hide-sm">Sacola</span>
+        <b class="count" id="bag-count" aria-live="polite">0</b>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- Destaque -->
+  <section class="hero" aria-labelledby="hero-t">
+    <div class="hero-in">
+      <div class="hero-txt">
+        <h1 id="hero-t" class="rv">Relógios, perfumes e tênis importados.</h1>
+        <p class="rv">Peças originais, escolhidas uma a uma. Escolha aqui no site e finalize com a gente pelo WhatsApp ou no Pix.</p>
+        <div class="hero-cta rv">
+          <a class="btn dark" href="#produtos">Ver produtos</a>
+          <a class="btn ghost" id="hero-wa" href="#" target="_blank" rel="noopener">Falar no WhatsApp</a>
+        </div>
+      </div>
+      <button class="feat" id="feat" type="button" aria-label="Ver produto em destaque" disabled>
+        <span class="feat-img" id="feat-img"><span class="sk"></span></span>
+        <span class="feat-info" id="feat-info">
+          <span class="feat-tag">Destaque</span>
+          <span class="feat-name">Carregando…</span>
+        </span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Produtos -->
+  <section class="shop" id="produtos" aria-labelledby="shop-t">
+    <div class="tabs-wrap" id="tabs-wrap">
+      <div class="tabs" id="tabs" role="group" aria-label="Seções da loja"></div>
+    </div>
+    <div class="shop-head">
+      <h2 id="shop-t">Catálogo</h2>
+      <span class="cnt" id="cnt" aria-live="polite"></span>
+    </div>
+    <div class="grid" id="grid">
+      <div class="card sk-card"><span class="sk"></span></div>
+      <div class="card sk-card"><span class="sk"></span></div>
+      <div class="card sk-card"><span class="sk"></span></div>
+      <div class="card sk-card"><span class="sk"></span></div>
+    </div>
+  </section>
+
+  <!-- Mais pedidos -->
+  <section class="best" id="best" aria-labelledby="best-t" hidden>
+    <div class="best-head">
+      <h2 id="best-t">Mais pedidos</h2>
+      <div class="arrows">
+        <button class="arrow" id="best-prev" aria-label="Anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <button class="arrow" id="best-next" aria-label="Próximo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
+    <div class="rail" id="best-rail"></div>
+  </section>
+
+  <!-- Faixa de confiança -->
+  <section class="trust" aria-label="Por que comprar com a gente">
+    <ul>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="m9 12 2 2 4-4"/></svg>
+        <div><b>Originais</b><span>Peças importadas, com procedência.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg>
+        <div><b>Pix na hora</b><span>QR Code gerado no próprio site.</span></div>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.4A8.5 8.5 0 1 1 21 12z"/></svg>
+        <div><b>Atendimento pessoal</b><span>Você fala direto com a loja.</span></div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- Como comprar -->
+  <section class="how" aria-labelledby="how-t">
+    <h2 id="how-t">Como comprar</h2>
+    <ol>
+      <li class="rv"><b>1</b><div><h3>Escolha</h3><p>Escolha o produto e, se tiver, o tamanho. Coloque na sacola.</p></div></li>
+      <li class="rv"><b>2</b><div><h3>Finalize</h3><p>Envie a sacola pelo WhatsApp ou pague na hora com o QR Code do Pix.</p></div></li>
+      <li class="rv"><b>3</b><div><h3>Receba</h3><p>Mande o comprovante e acompanhe a entrega até a sua casa.</p></div></li>
+    </ol>
+  </section>
+
+</main>
+
+<footer class="ft">
+  <div class="ft-in">
+    <div class="ft-brand"><img src="img/logo.jpeg" alt="" width="64" height="64"><p>London Imports<br><span>Do mundo para você</span></p></div>
+    <ul class="ft-links">
+      <li><a id="ft-wa" href="#" target="_blank" rel="noopener">WhatsApp</a></li>
+      <li id="ft-ig-li" hidden><a id="ft-ig" href="#" target="_blank" rel="noopener">Instagram</a></li>
+      <li><a href="admin.html">Área da loja</a></li>
+    </ul>
+  </div>
+  <p class="ft-copy">© <span id="year"></span> London Imports</p>
+</footer>
+
+<!-- Barra de baixo (celular) -->
+<nav class="mbar" aria-label="Atalhos">
+  <a href="#" id="mb-home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>Início</a>
+  <button id="mb-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Buscar</button>
+  <button id="mb-bag" class="bag-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Sacola<b class="count" id="mb-count">0</b></button>
+  <a id="mb-wa" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.6L3 21l1.4-5.4A8.5 8.5 0 1 1 21 12z"/></svg>WhatsApp</a>
+</nav>
+
+<!-- Busca no celular -->
+<div class="msearch" id="msearch" role="dialog" aria-modal="true" aria-label="Buscar produtos">
+  <div class="msearch-top">
+    <input id="mq" type="search" placeholder="Buscar por nome ou marca" autocomplete="off" aria-label="Buscar produtos">
+    <button class="x" id="msearch-close" aria-label="Fechar busca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+</div>
+
+<!-- Produto -->
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="p-name">
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-p" id="sheet-p">
+    <div class="grab" id="grab" aria-hidden="true"><i></i></div>
+    <button class="x sheet-x" data-close aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div class="p-gal">
+      <div class="p-track" id="p-track"></div>
+      <div class="p-dots" id="p-dots"></div>
+    </div>
+    <div class="p-info">
+      <p class="p-brand" id="p-brand"></p>
+      <h2 id="p-name"></h2>
+      <div class="p-price" id="p-price"></div>
+      <p class="p-stock" id="p-stock" hidden></p>
+      <div class="p-sizes" id="p-sizes-wrap" hidden>
+        <p class="p-lbl" id="p-size-lbl">Tamanho</p>
+        <div class="sizes" id="p-sizes" role="radiogroup" aria-labelledby="p-size-lbl"></div>
+      </div>
+      <div class="p-act" id="p-act">
+        <button class="btn dark full" id="p-add">Adicionar à sacola</button>
+        <a class="btn wa full" id="p-wa" href="#" target="_blank" rel="noopener">Comprar pelo WhatsApp</a>
+        <button class="btn ghost full" id="p-pixb" hidden>Pagar com Pix</button>
+      </div>
+      <p class="p-sold" id="p-sold" hidden>Esgotado. <a id="p-sold-wa" href="#" target="_blank" rel="noopener">Chame no WhatsApp</a> para saber quando volta.</p>
+      <div class="pix" id="p-pix" hidden></div>
+      <div class="p-desc" id="p-desc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Sacola -->
+<aside class="bag" id="bag" role="dialog" aria-modal="true" aria-labelledby="bag-t">
+  <div class="bag-bg" data-close-bag></div>
+  <div class="bag-p">
+    <div class="bag-h">
+      <h2 id="bag-t">Sacola</h2>
+      <button class="x" data-close-bag aria-label="Fechar sacola"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="bag-items" id="bag-items"></div>
+    <div class="bag-f" id="bag-f">
+      <div class="bag-tot"><span>Total</span><strong id="bag-total">R$ 0,00</strong></div>
+      <a class="btn wa full" id="bag-wa" href="#" target="_blank" rel="noopener">Enviar pedido pelo WhatsApp</a>
+      <button class="btn ghost full" id="bag-pixb" hidden>Pagar com Pix</button>
+      <div class="pix" id="bag-pix" hidden></div>
+      <p class="bag-hint">Confirmamos a disponibilidade antes do envio.</p>
+    </div>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script><script src="js/config.js"></script><script src="js/util.js"></script><script src="js/store.js"></script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/loja.js"></script>
+</body>
+</html>
