@@ -465,11 +465,6 @@
   $$(".rv").forEach((el) => (el.closest(".hero") ? setTimeout(() => el.classList.add("in"), 60) : io.observe(el)));
   addEventListener("resize", moveInd);
 
-  // ---------- login: mostra "Painel" se já estiver logado ----------
-  db.auth.getSession().then(({ data }) => {
-    if (data && data.session) { $("#login-label").textContent = "Painel"; $("#login-btn").classList.add("logged"); }
-  }).catch(() => {});
-
   $("#year").textContent = new Date().getFullYear();
 
   // ---------- início ----------

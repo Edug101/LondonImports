@@ -51,7 +51,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .hd-act { display: flex; align-items: center; gap: 4px; }
 .hd-link { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; transition: background .2s; }
 .hd-link:hover { background: var(--bg); }
-.hd-link.logged { color: var(--gold-text); }
 .count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; }
 .count.zero { background: var(--line); color: var(--ink-2); }
 .count.bump { animation: bump .45s var(--ease); }
@@ -179,6 +178,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .ft-links a { text-decoration: none; font-weight: 600; }
 .ft-links a:hover { color: var(--gold); }
 .ft-copy { max-width: var(--max); margin: 24px auto 0; padding-top: 18px; border-top: 1px solid #2a2a2a; font-size: 13px; color: #8f897c; }
+.ft-adm { margin-left: 14px; color: #4a463f; text-decoration: none; font-size: 12px; }
+.ft-adm:hover, .ft-adm:focus-visible { color: #8f897c; }
 
 /* ---------- barra de baixo (celular) ---------- */
 .mbar { display: none; }
