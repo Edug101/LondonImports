@@ -183,6 +183,7 @@
     const g = pics(x);
     $("#p-track").innerHTML = g.map((u, i) => `<img src="${u}" alt="${i ? "" : esc(x.name)}"${i ? ' loading="lazy"' : ""}>`).join("");
     $("#p-track").scrollLeft = 0;
+    $("#p-prev").hidden = $("#p-next").hidden = g.length < 2;
     $("#p-dots").innerHTML = g.length > 1 ? g.map((_, i) => `<button class="${i ? "" : "on"}" data-dot="${i}" aria-label="Foto ${i + 1} de ${g.length}"></button>`).join("") : "";
     $("#p-brand").textContent = x.brand || x.category || "";
     $("#p-name").textContent = x.name;
@@ -206,8 +207,10 @@
     document.body.classList.add("lock");
     modalOn(true);
     setTimeout(() => $(".sheet-x").focus({ preventScroll: true }), 50);
+    startAuto(g.length);
   }
   function closeP() {
+    stopAuto();
     sheet.classList.remove("open");
     if (!bagEl.classList.contains("open")) { document.body.classList.remove("lock"); modalOn(false); }
     panel.style.transform = "";
@@ -225,10 +228,28 @@
       $$("#p-dots button").forEach((d, k) => d.classList.toggle("on", k === i));
     });
   }, { passive: true });
+  const goPic = (i) => {
+    const t = $("#p-track"), n = t.children.length;
+    t.scrollTo({ left: t.clientWidth * ((i + n) % n), behavior: reduce ? "auto" : "smooth" });
+  };
+  const picNow = () => { const t = $("#p-track"); return Math.round(t.scrollLeft / t.clientWidth); };
   $("#p-dots").addEventListener("click", (e) => {
     const d = e.target.closest("[data-dot]"); if (!d) return;
-    const t = $("#p-track"); t.scrollTo({ left: t.clientWidth * +d.dataset.dot, behavior: reduce ? "auto" : "smooth" });
+    stopAuto(); goPic(+d.dataset.dot);
   });
+  $("#p-prev").addEventListener("click", () => { stopAuto(); goPic(picNow() - 1); });
+  $("#p-next").addEventListener("click", () => { stopAuto(); goPic(picNow() + 1); });
+
+  // fotos passam sozinhas a cada 3s; para de vez quando a pessoa mexe na galeria
+  const AUTO_MS = 3000;
+  let autoT = 0;
+  function startAuto(n) {
+    stopAuto();
+    if (n < 2 || reduce) return;
+    autoT = setInterval(() => { if (!document.hidden) goPic(picNow() + 1); }, AUTO_MS);
+  }
+  function stopAuto() { clearInterval(autoT); autoT = 0; }
+  ["pointerdown", "wheel", "keydown"].forEach((ev) => $(".p-gal").addEventListener(ev, stopAuto, { passive: true }));
 
   $("#p-sizes").addEventListener("click", (e) => {
     const b = e.target.closest("[data-size]"); if (!b) return;
