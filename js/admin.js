@@ -11,7 +11,7 @@ $("go").onclick=async()=>{
 $("out").onclick=async()=>{await db.auth.signOut();gate()};
 function thumbs(){$("thumbs").innerHTML=imgs.map((u,i)=>`<div data-c="${i}" class="${i?"":"cover"}" style="background-image:url('${safeUrl(u)}')" title="Clique para tornar capa">${i?"":"<small>CAPA</small>"}<b data-r="${i}" title="Remover">×</b></div>`).join("")}
 $("thumbs").onclick=e=>{const r=e.target.dataset.r;if(r!==undefined){imgs.splice(+r,1);thumbs();return}const c=e.target.closest("[data-c]");if(c){imgs.unshift(imgs.splice(+c.dataset.c,1)[0]);thumbs()}};
-async function load(){const{data}=await db.from("products").select("*").order("created_at",{ascending:false});items=data||[];
+async function load(){const{data}=await db.from("products").select("*").order("created_at",{ascending:false});items=data||[];window.onProducts&&window.onProducts(items);
   $("list").innerHTML=items.length?items.map(x=>`<div class="row"><img src="${safeUrl(x.image_url)}" alt=""><div><b>${esc(x.name)}</b><br><small>${money(x.price)}${x.active?"":" · oculto"}${x.featured?" · destaque":""}${x.popular?" · mais pedido":""}${(x.stock??1)<=0?" · ESGOTADO":" · estoque "+(x.stock??1)}${x.whatsapp?" · vendedor próprio":""}</small></div><button data-e="${esc(x.id)}">Editar</button><button data-d="${esc(x.id)}">Excluir</button></div>`).join(""):'<p class="msg">Nenhum produto ainda. Cadastre o primeiro acima.</p>'}
 $("list").onclick=async e=>{const d=e.target.dataset;
   if(d.d&&confirm("Excluir este produto?")){await db.from("products").delete().eq("id",d.d);load()}

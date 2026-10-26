@@ -11,6 +11,8 @@
 
   let all = [];
   let cfg = { whatsapp: "", instagram: "", pix_key: "", pix_name: "", pix_city: "" };
+  let promos = []; // "compre 2 ganhe 1" ativos (escolhidos no painel)
+  let coupon = null; // cupom de % que o cliente digitou
   let tab = "Todos";
   let query = "";
 
@@ -25,19 +27,79 @@
   const byId = (id) => all.find((x) => String(x.id) === String(id));
   const lowText = (n) => (n === 1 ? "Última unidade" : `Só restam ${n}`);
 
+  // ---------- cupons e promoções ----------
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const promoOf = (x) => promos.find((c) => (c.product_ids || []).includes(x.id));
+  const pctFor = (x) => (coupon && (coupon.product_ids || []).includes(x.id) ? coupon.percent : 0);
+  // a cada 3 unidades da promoção, a mais barata sai de graça; o cupom de % vale nas outras
+  function calc(ls) {
+    const units = [];
+    ls.forEach((b) => { for (let i = 0; i < b.qty; i++) units.push({ p: b.p, price: Number(b.p.price) }); });
+    const used = {}, add = (k, v) => (used[k] = r2((used[k] || 0) + v));
+    promos.forEach((pr) => {
+      const el = units.filter((u) => !u.free && (pr.product_ids || []).includes(u.p.id)).sort((a, b) => b.price - a.price);
+      el.slice(el.length - Math.floor(el.length / 3)).forEach((u) => { u.free = true; add(pr.code, u.price); });
+    });
+    if (coupon) units.forEach((u) => { const p = pctFor(u.p); if (!u.free && p) add(coupon.code, r2(u.price * p / 100)); });
+    const sub = r2(units.reduce((s, u) => s + u.price, 0));
+    const off = r2(Object.values(used).reduce((s, v) => s + v, 0));
+    return { sub, used, total: r2(sub - off) };
+  }
+  const discName = (code) => (promos.some((p) => p.code === code) ? "Compre 2 ganhe 1" : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
+  const discText = (r) => Object.entries(r.used).map(([k, v]) => `${discName(k)}: -${money(v)}`).join("\n");
+  // relatório do painel: guarda quanto cada cupom economizou (uma vez por pedido)
+  const logged = new Set();
+  function logUse(r, channel) {
+    Object.entries(r.used).forEach(([code, v]) => {
+      const k = `${code}|${v}|${r.total}`;
+      if (v <= 0 || logged.has(k)) return;
+      logged.add(k);
+      db.rpc("log_coupon_use", { p_code: code, p_discount: v, p_total: r.total, p_channel: channel }).then(() => {}, () => {});
+    });
+  }
+  async function applyCoupon(input, msg) {
+    const v = input.value.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+    if (!v) { input.focus(); return; }
+    msg.className = "cupom-msg"; msg.textContent = "Conferindo...";
+    const { data, error } = await db.rpc("check_coupon", { p_code: v });
+    const c = !error && data && data[0];
+    if (!c) { msg.classList.add("bad"); msg.textContent = "Cupom inválido ou expirado."; return; }
+    if (c.kind === "b2g1") { msg.textContent = "Essa promoção entra sozinha: leve 3 unidades dos produtos da promoção e pague 2."; return; }
+    coupon = c;
+    try { sessionStorage.setItem("li-cupom", JSON.stringify(c)); } catch (err) { /* navegação privada */ }
+    refreshCoupon();
+  }
+  function couponMsg(k, x) {
+    const msg = $(`#${k}-cup-msg`);
+    if (!coupon) { msg.className = "cupom-msg"; msg.textContent = ""; return; }
+    $(`#${k}-cup`).value = coupon.code;
+    const ok = x ? pctFor(x) : lines().some((b) => pctFor(b.p));
+    msg.className = "cupom-msg" + (ok ? " ok" : " bad");
+    msg.innerHTML = ok
+      ? `Cupom <b>${esc(coupon.code)}</b> aplicado: ${coupon.percent}% de desconto. <button type="button" data-uncup>Remover</button>`
+      : `O cupom <b>${esc(coupon.code)}</b> não vale para ${x ? "este produto" : "os produtos da sacola"}. <button type="button" data-uncup>Remover</button>`;
+  }
+  function refreshCoupon() {
+    if (cur && sheet.classList.contains("open")) { couponMsg("p", cur); showPrice(); }
+    drawBag();
+  }
+  try { coupon = JSON.parse(sessionStorage.getItem("li-cupom")) || null; } catch (err) { coupon = null; }
+
   // ---------- dados ----------
   async function load() {
-    const [p, s] = await Promise.all([
+    const [p, s, c] = await Promise.all([
       db.from("products")
         .select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,pix_key,featured,popular,stock")
         .eq("active", true)
         .order("featured", { ascending: false })
         .order("created_at", { ascending: false }),
       db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id", 1).single(),
+      db.from("coupons").select("code,kind,product_ids").eq("kind", "b2g1").eq("active", true),
     ]);
     if (p.error) throw p.error;
     all = p.data || [];
     if (s.data) cfg = s.data;
+    promos = c.data || [];
   }
 
   // ---------- card ----------
@@ -45,6 +107,7 @@
     const g = pics(x), so = out(x), st = stockOf(x);
     let badge = "";
     if (so) badge = `<span class="badge sold">Esgotado</span>`;
+    else if (promoOf(x)) badge = `<span class="badge promo">Compre 2 ganhe 1</span>`;
     else if (hasOff(x)) badge = `<span class="badge off">-${pct(x)}%</span>`;
     else if (x.popular) badge = `<span class="badge">Mais pedido</span>`;
     return `<article class="card enter${so ? " sold" : ""}" style="--i:${i}">
@@ -167,8 +230,18 @@
   const sheet = $("#sheet"), panel = $("#sheet-p");
   let cur = null, size = "", lastFocus = null;
 
+  const sheetCalc = () => calc([{ p: cur, qty: 1 }]);
   function buyLink() {
-    $("#p-wa").href = wa(`Olá! Tenho interesse em: ${cur.name}${size ? ` (tamanho ${size})` : ""} - ${money(cur.price)}`, cur.whatsapp);
+    const r = sheetCalc(), off = Object.keys(r.used).length;
+    $("#p-wa").href = wa(`Olá! Tenho interesse em: ${cur.name}${size ? ` (tamanho ${size})` : ""} - ${money(r.sub)}${off ? `\n${discText(r)}\nTotal: ${money(r.total)}` : ""}`, cur.whatsapp);
+  }
+  function showPrice() {
+    const r = sheetCalc(), p = pctFor(cur);
+    $("#p-price").innerHTML = p
+      ? `<span class="price">${money(r.total)}</span><span class="old">${money(cur.price)}</span><span class="cup-tag">Cupom -${p}%</span>`
+      : `<span class="price">${money(cur.price)}</span>${hasOff(cur) ? `<span class="old">${money(cur.old_price)}</span>` : ""}`;
+    buyLink();
+    $("#p-pix").hidden = true;
   }
   const needSize = () => (cur.sizes || []).length > 0 && !size;
   function askSize() {
@@ -187,7 +260,7 @@
     $("#p-dots").innerHTML = g.length > 1 ? g.map((_, i) => `<button class="${i ? "" : "on"}" data-dot="${i}" aria-label="Foto ${i + 1} de ${g.length}"></button>`).join("") : "";
     $("#p-brand").textContent = x.brand || x.category || "";
     $("#p-name").textContent = x.name;
-    $("#p-price").innerHTML = `<span class="price">${money(x.price)}</span>${hasOff(x) ? `<span class="old">${money(x.old_price)}</span>` : ""}`;
+    $("#p-promo").hidden = !promoOf(x) || out(x);
     const st = stockOf(x), so = out(x);
     $("#p-stock").hidden = so || st > 5;
     $("#p-stock").textContent = lowText(st);
@@ -201,7 +274,9 @@
     $("#p-pixb").hidden = !pk || so;
     $("#p-pix").hidden = true;
     $("#p-desc").textContent = x.description || "";
-    buyLink();
+    $("#p-cup").value = coupon ? coupon.code : "";
+    couponMsg("p", x);
+    showPrice();
     panel.scrollTop = 0; panel.style.transform = "";
     sheet.classList.add("open");
     document.body.classList.add("lock");
@@ -257,7 +332,15 @@
     $$("#p-sizes button").forEach((x) => x.setAttribute("aria-checked", x === b));
     buyLink();
   });
-  $("#p-wa").addEventListener("click", (e) => { if (needSize()) { e.preventDefault(); askSize(); } });
+  $("#p-wa").addEventListener("click", (e) => { if (needSize()) { e.preventDefault(); askSize(); return; } logUse(sheetCalc(), "whatsapp"); });
+  ["p", "bag"].forEach((k) => $(`#${k}-cup-f`).addEventListener("submit", (e) => { e.preventDefault(); applyCoupon($(`#${k}-cup`), $(`#${k}-cup-msg`)); }));
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("[data-uncup]")) return;
+    coupon = null; $("#p-cup").value = ""; $("#bag-cup").value = "";
+    try { sessionStorage.removeItem("li-cupom"); } catch (err) { /* navegação privada */ }
+    if (cur) couponMsg("p", cur);
+    refreshCoupon();
+  });
   $("#p-add").addEventListener("click", () => {
     if (needSize()) return askSize();
     const img = $("#p-track img");
@@ -267,7 +350,9 @@
     if (needSize()) return askSize();
     const box = $("#p-pix");
     if (!box.hidden) { box.hidden = true; return; }
-    renderPix(box, pixKey(cur.pix_key) || pixKey(cfg.pix_key), Number(cur.price), `${cur.name}${size ? ` (tamanho ${size})` : ""}`, cur.whatsapp);
+    const r = sheetCalc();
+    logUse(r, "pix");
+    renderPix(box, pixKey(cur.pix_key) || pixKey(cfg.pix_key), r.total, `${cur.name}${size ? ` (tamanho ${size})` : ""}${Object.keys(r.used).length ? ` com ${discText(r).replace(/\n/g, ", ")}` : ""}`, cur.whatsapp);
     box.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   });
 
@@ -344,13 +429,16 @@
   function drawBag(bump = false) {
     const ls = all.length ? lines() : [];
     const count = ls.reduce((s, b) => s + b.qty, 0);
-    const total = ls.reduce((s, b) => s + b.qty * Number(b.p.price), 0);
+    const r = calc(ls), total = r.total;
     $$(".count").forEach((c) => {
       c.textContent = count; c.classList.toggle("zero", !count);
       if (bump) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
     });
     $("#open-bag").setAttribute("aria-label", `Abrir sacola, ${count} ${count === 1 ? "item" : "itens"}`);
     $("#bag-total").textContent = money(total);
+    const ds = Object.entries(r.used);
+    $("#bag-disc").innerHTML = ds.length ? `<div><span>Subtotal</span><span>${money(r.sub)}</span></div>` + ds.map(([k, v]) => `<div class="d"><span>${esc(discName(k))}</span><span>-${money(v)}</span></div>`).join("") : "";
+    couponMsg("bag", null);
     $("#bag-f").hidden = !ls.length;
     $("#bag-items").innerHTML = ls.length ? ls.map((b) => `
       <div class="bi" data-key="${esc(b.key)}">
@@ -371,7 +459,7 @@
     // se todas as peças são do mesmo vendedor, o pedido vai pro WhatsApp dele; senão, da loja
     const sellers = [...new Set(ls.map((b) => digits(b.p.whatsapp) || digits(cfg.whatsapp)))];
     const seller = sellers.length === 1 ? sellers[0] : cfg.whatsapp;
-    $("#bag-wa").href = wa(`Olá! Quero fazer este pedido:\n\n${txt}\n\nTotal: ${money(total)}\n\nPode confirmar a disponibilidade?`, seller);
+    $("#bag-wa").href = wa(`Olá! Quero fazer este pedido:\n\n${txt}${ds.length ? `\n\nSubtotal: ${money(r.sub)}\n${discText(r)}` : ""}\n\nTotal: ${money(total)}\n\nPode confirmar a disponibilidade?`, seller);
     // Pix da sacola só aparece quando todas as peças usam a mesma chave
     const keys = [...new Set(ls.map((b) => pixKey(b.p.pix_key) || pixKey(cfg.pix_key)))];
     const pk = keys.length === 1 ? keys[0] : "";
@@ -380,6 +468,7 @@
     $("#bag-pixb").onclick = () => {
       const box = $("#bag-pix");
       if (!box.hidden) { box.hidden = true; return; }
+      logUse(r, "pix");
       renderPix(box, pk, total, `pedido com ${count} ${count === 1 ? "item" : "itens"}`, seller);
     };
   }
@@ -402,6 +491,7 @@
   function closeBag() { bagEl.classList.remove("open"); document.body.classList.remove("lock"); modalOn(false); bagFocus?.focus?.({ preventScroll: true }); }
   $("#open-bag").addEventListener("click", openBag);
   $("#mb-bag").addEventListener("click", openBag);
+  $("#bag-wa").addEventListener("click", () => logUse(calc(lines()), "whatsapp"));
   $$("[data-close-bag]").forEach((el) => el.addEventListener("click", closeBag));
 
   // ---------- busca ----------

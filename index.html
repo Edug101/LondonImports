@@ -163,6 +163,7 @@
       <p class="p-brand" id="p-brand"></p>
       <h2 id="p-name"></h2>
       <div class="p-price" id="p-price"></div>
+      <p class="p-promo" id="p-promo" hidden><b>Promoção especial</b> Compre 2, ganhe 1 de graça</p>
       <p class="p-stock" id="p-stock" hidden></p>
       <div class="p-sizes" id="p-sizes-wrap" hidden>
         <p class="p-lbl" id="p-size-lbl">Tamanho</p>
@@ -171,6 +172,12 @@
       <div class="p-act" id="p-act">
         <button class="btn dark full" id="p-add">Adicionar à sacola</button>
         <a class="btn wa full" id="p-wa" href="#" target="_blank" rel="noopener">Comprar pelo WhatsApp</a>
+        <form class="cupom" id="p-cup-f" novalidate>
+          <label class="sr" for="p-cup">Cupom de desconto</label>
+          <input id="p-cup" placeholder="Tem cupom? Digite aqui" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <button>Aplicar</button>
+        </form>
+        <p class="cupom-msg" id="p-cup-msg" aria-live="polite"></p>
         <button class="btn ghost full" id="p-pixb" hidden>Pagar com Pix</button>
       </div>
       <p class="p-sold" id="p-sold" hidden>Esgotado. <a id="p-sold-wa" href="#" target="_blank" rel="noopener">Chame no WhatsApp</a> para saber quando volta.</p>
@@ -190,8 +197,15 @@
     </div>
     <div class="bag-items" id="bag-items"></div>
     <div class="bag-f" id="bag-f">
+      <div class="bag-disc" id="bag-disc"></div>
       <div class="bag-tot"><span>Total</span><strong id="bag-total">R$ 0,00</strong></div>
       <a class="btn wa full" id="bag-wa" href="#" target="_blank" rel="noopener">Enviar pedido pelo WhatsApp</a>
+      <form class="cupom" id="bag-cup-f" novalidate>
+        <label class="sr" for="bag-cup">Cupom de desconto</label>
+        <input id="bag-cup" placeholder="Tem cupom? Digite aqui" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button>Aplicar</button>
+      </form>
+      <p class="cupom-msg" id="bag-cup-msg" aria-live="polite"></p>
       <button class="btn ghost full" id="bag-pixb" hidden>Pagar com Pix</button>
       <div class="pix" id="bag-pix" hidden></div>
       <p class="bag-hint">Confirmamos a disponibilidade antes do envio.</p>

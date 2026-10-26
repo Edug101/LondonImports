@@ -72,6 +72,29 @@ h1, h2 { margin: 0; line-height: 1.15; }
 .thumbs b { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,0,0,.75); color: #fff; text-align: center; line-height: 24px; font-size: 14px; }
 .thumbs small { position: absolute; left: 0; right: 0; bottom: 0; background: var(--ink); color: #fff; font-size: 11px; font-weight: 700; text-align: center; }
 
+/* cupons e relatório */
+.sub { margin: 26px 0 8px; font-size: 16px; font-weight: 700; }
+.note { margin: 10px 0 0; font-size: 13px; color: var(--ink-2); }
+.link { border: 0; background: none; padding: 6px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--gold-text); text-decoration: underline; cursor: pointer; }
+.c-prods-h { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.c-list { display: grid; gap: 6px; max-height: 240px; overflow-y: auto; padding: 6px; border: 1px solid #8a8478; border-radius: 10px; }
+.f .c-item { display: flex; grid-template-columns: none; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.f .c-item:hover { background: var(--bg); }
+.f .c-item input { width: 18px; min-height: 0; height: 18px; padding: 0; flex: none; accent-color: var(--ink); }
+.c-item img { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--bg); flex: none; }
+.c-item span { display: grid; line-height: 1.3; }
+.c-item small { color: var(--ink-2); font-weight: 400; }
+.c-row small { display: block; }
+.c-names { font-size: 12px; }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 6px; background: var(--bg); color: var(--ink-2); font-size: 12px; font-weight: 600; }
+.rep { overflow-x: auto; }
+.rep table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rep th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.rep td { padding: 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.rep td small { display: block; color: var(--ink-2); font-size: 12px; }
+.rep tfoot td { font-weight: 700; border-bottom: 0; }
+.rep .save { color: #1d7a3e; font-weight: 700; }
+
 @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {
   .f { grid-template-columns: 1fr; }

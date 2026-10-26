@@ -89,12 +89,34 @@
             <p class="msg" id="s_msg"></p>
           </div>
         </section>
+
+        <section class="box" id="cupons">
+          <h2>Relatórios e cupons</h2>
+          <form class="f" id="c_form">
+            <label>Nome do cupom<input id="c_code" maxlength="30" placeholder="EX: LONDON10" autocomplete="off" required></label>
+            <label>Tipo<select id="c_kind"><option value="percent">Desconto em %</option><option value="b2g1">Compre 2 ganhe 1</option></select></label>
+            <label class="full" id="c_pct_l">Desconto<select id="c_pct"></select></label>
+            <div class="full c-prods">
+              <div class="c-prods-h"><span>Vale para quais produtos?</span><button type="button" class="link" id="c_all">Marcar todos</button></div>
+              <div id="c_list" class="c-list"></div>
+            </div>
+            <button class="btn">Criar cupom</button>
+            <p class="msg full" id="c_msg"></p>
+          </form>
+
+          <h3 class="sub">Cupons</h3>
+          <div id="c_rows"></div>
+
+          <h3 class="sub">Quanto cada cupom economizou</h3>
+          <div id="c_rep"></div>
+          <p class="note">Conta os pedidos que o cliente enviou pelo WhatsApp ou abriu no Pix usando o cupom. Confira no WhatsApp quais foram pagos.</p>
+        </section>
       </div>
     </div>
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script><script src="js/util.js"></script><script src="js/admin.js"></script>
+<script src="js/config.js"></script><script src="js/util.js"></script><script src="js/admin.js"></script><script src="js/cupons.js"></script>
 </body>
 </html>

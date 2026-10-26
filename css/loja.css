@@ -119,6 +119,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .card:hover .c-img img.alt { opacity: 1; }
 .badge { position: absolute; left: 10px; top: 10px; z-index: 1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--ink); color: #fff; }
 .badge.off { background: var(--gold); color: #1a1408; }
+.badge.promo { background: #1d7a3e; color: #fff; }
 .badge.sold { background: #fff; color: var(--ink); border: 1px solid var(--line); }
 .card.sold .c-img img { filter: grayscale(1); opacity: .55; }
 .c-open { position: absolute; inset: 0; z-index: 1; }
@@ -225,6 +226,25 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .sizes.shake { animation: shake .4s; }
 @keyframes shake { 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
 .p-act { display: grid; gap: 10px; }
+.p-promo { margin: 0; padding: 10px 14px; border-radius: 10px; background: #e7f4ec; color: #14532d; font-size: 15px; }
+.p-promo b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.cup-tag { align-self: center; padding: 3px 8px; border-radius: 6px; background: #e7f4ec; color: #14532d; font-size: 13px; font-weight: 700; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.cupom { display: flex; gap: 8px; }
+.cupom input { flex: 1; min-width: 0; height: 46px; padding: 0 14px; border: 1px dashed #8a8478; border-radius: 10px; background: #fff; font: inherit; font-size: 15px; text-transform: uppercase; }
+.cupom input::placeholder { text-transform: none; color: var(--ink-2); }
+.cupom input:focus { outline: none; border-style: solid; border-color: var(--ink); }
+.cupom button { height: 46px; padding: 0 18px; border-radius: 10px; border: 1.5px solid var(--ink); font-weight: 700; font-size: 14px; }
+.cupom button:hover { background: var(--ink); color: #fff; }
+.cupom-msg { margin: -2px 0 0; font-size: 14px; color: var(--ink-2); }
+.cupom-msg:empty { display: none; }
+.cupom-msg.ok { color: #14532d; }
+.cupom-msg.bad { color: var(--red); }
+.cupom-msg button { padding: 0; font-size: 14px; font-weight: 600; text-decoration: underline; color: var(--ink); }
+.bag-disc { display: grid; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.bag-disc:empty { display: none; }
+.bag-disc div { display: flex; justify-content: space-between; }
+.bag-disc .d { color: #14532d; font-weight: 600; }
 .p-sold { margin: 0; padding: 14px 16px; border-radius: 10px; background: #f8ecea; color: var(--red); font-weight: 600; }
 .p-desc { color: var(--ink-2); font-size: 15px; white-space: pre-line; border-top: 1px solid var(--line); padding-top: 14px; }
 .p-desc:empty { display: none; }
