@@ -94,6 +94,13 @@ h1, h2 { margin: 0; line-height: 1.15; }
 .rep td small { display: block; color: var(--ink-2); font-size: 12px; }
 .rep tfoot td { font-weight: 700; border-bottom: 0; }
 .rep .save { color: #1d7a3e; font-weight: 700; }
+.rep-act { display: flex; gap: 14px; margin-top: 2px; }
+.rep .link { font-size: 13px; padding: 2px 0; }
+.link.danger { color: var(--red); }
+.rep tr.use td { padding: 6px 8px; background: var(--bg); font-size: 13px; }
+.rep tr.use td:first-child { display: flex; align-items: center; gap: 12px; padding-left: 18px; }
+.rep tr.use small { display: inline; }
+.rep + .link { margin-top: 10px; font-size: 13px; }
 
 @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
 @media (max-width: 600px) {

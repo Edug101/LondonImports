@@ -29,14 +29,25 @@ async function loadCoupons(){
   if(r.error){$("c_msg").textContent="Falta criar as tabelas de cupom no Supabase (arquivo sql/cupons.sql).";coupons=[];drawRows();return}
   coupons=r.data||[];drawRows();loadReport()}
 
+let uses=[],open=new Set();
 async function loadReport(){
-  const r=await db.from("coupon_uses").select("code,discount,total,created_at").order("created_at",{ascending:false}).limit(5000);
+  const r=await db.from("coupon_uses").select("id,code,discount,total,channel,created_at").order("created_at",{ascending:false}).limit(5000);
   if(r.error){$("c_rep").innerHTML="";return}
-  const by={};for(const u of r.data||[]){const k=by[u.code]||(by[u.code]={n:0,save:0,sold:0,last:u.created_at});k.n++;k.save+=+u.discount;k.sold+=+u.total}
+  uses=r.data||[];drawReport()}
+const when=d=>new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+function drawReport(){
+  const by={};for(const u of uses){const k=by[u.code]||(by[u.code]={n:0,save:0,sold:0,last:u.created_at,list:[]});k.n++;k.save+=+u.discount;k.sold+=+u.total;k.list.push(u)}
   const rows=Object.entries(by).sort((a,b)=>b[1].save-a[1].save);
   if(!rows.length){$("c_rep").innerHTML='<p class="msg">Nenhum pedido com cupom ainda.</p>';return}
   const t=rows.reduce((s,[,k])=>({n:s.n+k.n,save:s.save+k.save,sold:s.sold+k.sold}),{n:0,save:0,sold:0});
-  $("c_rep").innerHTML=`<div class="rep"><table><thead><tr><th>Cupom</th><th>Pedidos</th><th>Economizou</th><th>Vendido</th></tr></thead><tbody>${rows.map(([c,k])=>`<tr><td><b>${esc(c)}</b><small>último: ${new Date(k.last).toLocaleDateString("pt-BR")}</small></td><td>${k.n}</td><td class="save">${money(k.save)}</td><td>${money(k.sold)}</td></tr>`).join("")}</tbody><tfoot><tr><td>Total</td><td>${t.n}</td><td class="save">${money(t.save)}</td><td>${money(t.sold)}</td></tr></tfoot></table></div>`}
+  $("c_rep").innerHTML=`<div class="rep"><table><thead><tr><th>Cupom</th><th>Pedidos</th><th>Economizou</th><th>Vendido</th></tr></thead><tbody>${rows.map(([c,k])=>`<tr><td><b>${esc(c)}</b><small>último: ${new Date(k.last).toLocaleDateString("pt-BR")}</small><span class="rep-act"><button class="link" data-v="${esc(c)}">${open.has(c)?"Esconder pedidos":"Ver pedidos"}</button><button class="link danger" data-z="${esc(c)}">Zerar</button></span></td><td>${k.n}</td><td class="save">${money(k.save)}</td><td>${money(k.sold)}</td></tr>${open.has(c)?k.list.map(u=>`<tr class="use"><td><small>${when(u.created_at)}${u.channel?" · "+(u.channel==="pix"?"Pix":"WhatsApp"):""}</small><button class="link danger" data-x="${esc(u.id)}">Retirar</button></td><td></td><td>${money(u.discount)}</td><td>${money(u.total)}</td></tr>`).join(""):""}`).join("")}</tbody><tfoot><tr><td>Total</td><td>${t.n}</td><td class="save">${money(t.save)}</td><td>${money(t.sold)}</td></tr></tfoot></table></div><button class="link danger" data-zall>Zerar todo o relatório</button>`}
+
+$("c_rep").onclick=async e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;let q=null;
+  if(d.v){open.has(d.v)?open.delete(d.v):open.add(d.v);drawReport();return}
+  if(d.x&&confirm("Retirar este pedido do relatório? Use quando a pessoa só testou o cupom e não comprou."))q=db.from("coupon_uses").delete().eq("id",d.x);
+  if(d.z&&confirm(`Zerar o relatório do cupom ${d.z}? Todos os pedidos dele saem da conta. O cupom continua funcionando.`))q=db.from("coupon_uses").delete().eq("code",d.z);
+  if(d.zall!==undefined&&confirm("Zerar todo o relatório? Isso apaga a conta de todos os cupons e não dá para desfazer."))q=db.from("coupon_uses").delete().gt("id",0);
+  if(!q)return;const r=await q;if(r.error){alert("Não foi possível apagar: "+r.error.message);return}loadReport()};
 
 $("c_rows").onclick=async e=>{const d=e.target.dataset;
   if(d.t){const c=coupons.find(x=>x.id===d.t);await db.from("coupons").update({active:!c.active}).eq("id",d.t);loadCoupons()}
