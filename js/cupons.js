@@ -16,7 +16,7 @@ function drawPicker(){
 $("c_list").onchange=e=>{const v=e.target.value;e.target.checked?picked.add(v):picked.delete(v);drawPicker()};
 $("c_all").onclick=()=>{picked=picked.size===prods.length?new Set():new Set(prods.map(x=>x.id));drawPicker()};
 
-const label=c=>c.kind==="b2g1"?"Compre 2 ganhe 1":c.kind==="freeship"?`Frete grátis (PAC) acima de ${money(c.min_total)}`:`${c.percent}% de desconto`;
+const label=c=>c.kind==="b2g1"?"Compre 2 ganhe 1":c.kind==="b1g50"?"Compre 1 e leve outro por 50%":c.kind==="freeship"?`Frete grátis (PAC) acima de ${money(c.min_total)}`:`${c.percent}% de desconto`;
 const nameOf=id=>(prods.find(p=>p.id===id)||{}).name;
 function drawRows(){
   $("c_rows").innerHTML=coupons.length?coupons.map(c=>{
@@ -61,7 +61,7 @@ $("c_form").onsubmit=async e=>{e.preventDefault();
   const min=Math.max(0,Math.min(1000000,+$("c_min").value||0));
   const row={code:c,kind,percent:kind==="percent"?+$("c_pct").value:null,min_total:kind==="freeship"?min:null,product_ids:kind==="freeship"?[]:[...picked],active:true};
   const r=await db.from("coupons").insert(row);
-  if(r.error){$("c_msg").textContent=r.error.code==="23505"?"Já existe um cupom com esse nome.":/min_total|coupons_ck/.test(r.error.message)?"Falta rodar o arquivo sql/frete.sql no Supabase.":"Erro ao salvar o cupom: "+r.error.message;return}
+  if(r.error){$("c_msg").textContent=r.error.code==="23505"?"Já existe um cupom com esse nome.":/min_total|coupons_ck/.test(r.error.message)?"Falta rodar o arquivo sql/leve2.sql no Supabase.":"Erro ao salvar o cupom: "+r.error.message;return}
   $("c_msg").textContent=`Cupom ${c} criado.`;$("c_form").reset();$("c_kind").onchange();picked=new Set();drawPicker();loadCoupons()};
 
 // o admin.js avisa quando a lista de produtos carrega

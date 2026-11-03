@@ -35,14 +35,21 @@
   const r2 = (v) => Math.round(v * 100) / 100;
   const promoOf = (x) => promos.find((c) => (c.product_ids || []).includes(x.id));
   const pctFor = (x) => (coupon && (coupon.product_ids || []).includes(x.id) ? coupon.percent : 0);
-  // a cada 3 unidades da promoção, a mais barata sai de graça; o cupom de % vale nas outras
+  // compre 2 ganhe 1: a cada 3 unidades, a mais barata sai de graça
+  // leve 2 (2ª por 50%): a cada 2 unidades, a mais barata sai pela metade
+  // o cupom de % vale nas unidades que não entraram em promoção
+  const PROMO = {
+    b2g1: { group: 3, off: 1, badge: "Compre 2 ganhe 1", line: "Compre 2, ganhe 1 de graça", name: "Compre 2 ganhe 1" },
+    b1g50: { group: 2, off: 0.5, badge: "2ª unidade 50% off", line: "Compre 1 e leve outro com 50% de desconto", name: "2ª unidade com 50% off" },
+  };
   function calc(ls) {
     const units = [];
     ls.forEach((b) => { for (let i = 0; i < b.qty; i++) units.push({ p: b.p, price: Number(b.p.price) }); });
     const used = {}, add = (k, v) => (used[k] = r2((used[k] || 0) + v));
     promos.forEach((pr) => {
       const el = units.filter((u) => !u.free && (pr.product_ids || []).includes(u.p.id)).sort((a, b) => b.price - a.price);
-      el.slice(el.length - Math.floor(el.length / 3)).forEach((u) => { u.free = true; add(pr.code, u.price); });
+      const k = PROMO[pr.kind];
+      el.slice(el.length - Math.floor(el.length / k.group)).forEach((u) => { u.free = true; add(pr.code, r2(u.price * k.off)); });
     });
     if (coupon) units.forEach((u) => { const p = pctFor(u.p); if (!u.free && p) add(coupon.code, r2(u.price * p / 100)); });
     const sub = r2(units.reduce((s, u) => s + u.price, 0));
@@ -61,7 +68,7 @@
     return { name: ship.svc === "pac" ? "PAC" : "SEDEX", price, days: z[ship.svc + "_d"], fr, charged: fr ? 0 : price };
   }
   const isFree = (code) => frees.some((f) => f.code === code);
-  const discName = (code) => (isFree(code) ? "Frete grátis" : promos.some((p) => p.code === code) ? "Compre 2 ganhe 1" : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
+  const discName = (code) => (isFree(code) ? "Frete grátis" : promos.some((p) => p.code === code) ? PROMO[promos.find((p) => p.code === code).kind].name : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
   const discs = (r) => Object.entries(r.used).filter(([k]) => !isFree(k));
   const discText = (r) => discs(r).map(([k, v]) => `${discName(k)}: -${money(v)}`).join("\n");
   const shipText = (r) => (r.ship ? `Frete ${r.ship.name} para ${ship.city}/${ship.uf} (CEP ${FRETE.fmt(ship.cep)}, até ${r.ship.days} dias úteis): ${r.ship.fr ? `grátis (era ${money(r.ship.price)})` : money(r.ship.price)}` : "");
@@ -108,6 +115,8 @@
     const c = !error && data && data[0];
     if (!c) { msg.classList.add("bad"); msg.textContent = "Cupom inválido ou expirado."; return; }
     if (c.kind === "b2g1") { msg.textContent = "Essa promoção entra sozinha: leve 3 unidades dos produtos da promoção e pague 2."; return; }
+    if (c.kind === "b1g50") { msg.textContent = "Essa promoção entra sozinha: leve 2 unidades dos produtos da promoção e a segunda sai com 50% de desconto."; return; }
+    if (c.kind === "freeship") { msg.textContent = "O frete grátis entra sozinho quando a compra passa do valor da promoção."; return; }
     coupon = c;
     try { sessionStorage.setItem("li-cupom", JSON.stringify(c)); } catch (err) { /* navegação privada */ }
     refreshCoupon();
@@ -137,13 +146,13 @@
         .order("featured", { ascending: false })
         .order("created_at", { ascending: false }),
       db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id", 1).single(),
-      db.from("coupons").select("*").in("kind", ["b2g1", "freeship"]).eq("active", true),
+      db.from("coupons").select("*").in("kind", ["b2g1", "b1g50", "freeship"]).eq("active", true),
       db.from("settings").select("ship_rates").eq("id", 1).single(),
     ]);
     if (p.error) throw p.error;
     all = p.data || [];
     if (s.data) cfg = s.data;
-    promos = (c.data || []).filter((x) => x.kind === "b2g1");
+    promos = (c.data || []).filter((x) => PROMO[x.kind]);
     frees = (c.data || []).filter((x) => x.kind === "freeship").sort((a, b) => a.min_total - b.min_total);
     if (f.data && f.data.ship_rates) shipCfg = { rates: FRETE.rates(f.data.ship_rates), origin: f.data.ship_rates.origin_uf || "SP" };
   }
@@ -153,7 +162,7 @@
     const g = pics(x), so = out(x), st = stockOf(x);
     let badge = "";
     if (so) badge = `<span class="badge sold">Esgotado</span>`;
-    else if (promoOf(x)) badge = `<span class="badge promo">Compre 2 ganhe 1</span>`;
+    else if (promoOf(x)) badge = `<span class="badge promo">${PROMO[promoOf(x).kind].badge}</span>`;
     else if (hasOff(x)) badge = `<span class="badge off">-${pct(x)}%</span>`;
     else if (x.popular) badge = `<span class="badge">Mais pedido</span>`;
     return `<article class="card enter${so ? " sold" : ""}" style="--i:${i}">
@@ -308,6 +317,7 @@
     $("#p-brand").textContent = x.brand || x.category || "";
     $("#p-name").textContent = x.name;
     $("#p-promo").hidden = !promoOf(x) || out(x);
+    if (promoOf(x)) $("#p-promo-t").textContent = PROMO[promoOf(x).kind].line;
     const st = stockOf(x), so = out(x);
     $("#p-stock").hidden = so || st > 5;
     $("#p-stock").textContent = lowText(st);
