@@ -14,7 +14,7 @@
   let promos = []; // "compre 2 ganhe 1" ativos (escolhidos no painel)
   let coupon = null; // cupom de % que o cliente digitou
   let frees = []; // cupons de frete grátis acima de um valor
-  let shipCfg = { rates: FRETE.rates(null), origin: "SP" }; // tabela de frete do painel
+  let shipCfg = { rates: FRETE.rates(null), origin: "SP", cep: "", city: "", localFree: true }; // tabela de frete do painel
   let ship = null; // CEP do cliente: { cep, city, uf, svc }
   try { ship = JSON.parse(sessionStorage.getItem("li-cep")) || null; } catch (err) { ship = null; }
   let tab = "Todos";
@@ -59,8 +59,11 @@
     return { sub, used, goods, ship: sh, total: r2(goods + (sh ? sh.charged : 0)) };
   }
   // frete do CEP escolhido; PAC sai de graça quando a compra passa do valor do cupom
+  // cliente da mesma cidade da loja: entrega grátis
+  const isLocal = () => !!(ship && shipCfg.localFree && shipCfg.city && ship.uf === shipCfg.origin && norm(ship.city) === norm(shipCfg.city));
   function shipOf(goods) {
     if (!ship) return null;
+    if (isLocal()) return { name: "local", price: 0, days: 0, fr: null, local: true, charged: 0 };
     const z = shipCfg.rates[FRETE.zoneOf(ship.uf, shipCfg.origin)];
     if (!z) return null;
     const fr = ship.svc === "pac" ? frees.find((f) => goods >= Number(f.min_total || 0)) : null;
@@ -71,12 +74,16 @@
   const discName = (code) => (isFree(code) ? "Frete grátis" : promos.some((p) => p.code === code) ? PROMO[promos.find((p) => p.code === code).kind].name : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
   const discs = (r) => Object.entries(r.used).filter(([k]) => !isFree(k));
   const discText = (r) => discs(r).map(([k, v]) => `${discName(k)}: -${money(v)}`).join("\n");
-  const shipText = (r) => (r.ship ? `Frete ${r.ship.name} para ${ship.city}/${ship.uf} (CEP ${FRETE.fmt(ship.cep)}, até ${r.ship.days} dias úteis): ${r.ship.fr ? `grátis (era ${money(r.ship.price)})` : money(r.ship.price)}` : "");
+  const shipText = (r) => (r.ship && r.ship.local ? `Frete para ${ship.city}/${ship.uf} (CEP ${FRETE.fmt(ship.cep)}): grátis, entrega na cidade` : r.ship ? `Frete ${r.ship.name} para ${ship.city}/${ship.uf} (CEP ${FRETE.fmt(ship.cep)}, até ${r.ship.days} dias úteis): ${r.ship.fr ? `grátis (era ${money(r.ship.price)})` : money(r.ship.price)}` : "");
   function shipBox(k, r) {
     const box = $(`#${k}-ship`);
     $(`#${k}-cep`).value = ship ? FRETE.fmt(ship.cep) : $(`#${k}-cep`).value;
     if (!ship) { if (!box.dataset.err) box.innerHTML = ""; return; }
     delete box.dataset.err;
+    if (isLocal()) {
+      box.innerHTML = `<p class="ship-to">Entrega para <b>${esc(ship.city)}/${esc(ship.uf)}</b></p><div class="ship-o on"><span><b>Entrega na cidade</b><small>combinamos o dia pelo WhatsApp</small></span><strong>Grátis</strong></div><p class="ship-hint ok">Frete grátis para ${esc(ship.city)}.</p>`;
+      return;
+    }
     const z = shipCfg.rates[FRETE.zoneOf(ship.uf, shipCfg.origin)];
     const fr = frees.find((f) => r.goods >= Number(f.min_total || 0));
     const opt = (svc, n) => `<label class="ship-o"><input type="radio" name="${k}-svc" value="${svc}"${ship.svc === svc ? " checked" : ""}><span><b>${n}</b><small>até ${z[svc + "_d"]} dias úteis</small></span><strong>${svc === "pac" && fr ? "Grátis" : money(z[svc])}</strong></label>`;
@@ -92,10 +99,17 @@
     box.innerHTML = `<p class="cupom-msg">Calculando...</p>`;
     try {
       const a = await FRETE.lookup(c);
+      // painel antigo não guardou a cidade da loja: descobre pelo CEP dela
+      if (!shipCfg.city && shipCfg.cep) { try { shipCfg.city = (await FRETE.lookup(shipCfg.cep)).city; } catch (e) { /* segue sem entrega local */ } }
       ship = { ...a, svc: ship ? ship.svc : "pac" };
       try { sessionStorage.setItem("li-cep", JSON.stringify(ship)); } catch (e) { /* navegação privada */ }
       refreshCoupon();
-    } catch (e) { ship = null; err("CEP não encontrado. Confira os números."); }
+    } catch (e) {
+      ship = null;
+      try { sessionStorage.removeItem("li-cep"); } catch (er) { /* navegação privada */ }
+      err("CEP não encontrado. Confira os números.");
+      refreshCoupon();
+    }
   }
   // relatório do painel: guarda quanto cada cupom economizou (uma vez por pedido)
   const logged = new Set();
@@ -147,14 +161,17 @@
         .order("created_at", { ascending: false }),
       db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id", 1).single(),
       db.from("coupons").select("*").in("kind", ["b2g1", "b1g50", "freeship"]).eq("active", true),
-      db.from("settings").select("ship_rates").eq("id", 1).single(),
+      db.from("settings").select("ship_cep,ship_rates").eq("id", 1).single(),
     ]);
     if (p.error) throw p.error;
     all = p.data || [];
     if (s.data) cfg = s.data;
     promos = (c.data || []).filter((x) => PROMO[x.kind]);
     frees = (c.data || []).filter((x) => x.kind === "freeship").sort((a, b) => a.min_total - b.min_total);
-    if (f.data && f.data.ship_rates) shipCfg = { rates: FRETE.rates(f.data.ship_rates), origin: f.data.ship_rates.origin_uf || "SP" };
+    if (f.data && f.data.ship_rates) {
+      const sr = f.data.ship_rates;
+      shipCfg = { rates: FRETE.rates(sr), origin: sr.origin_uf || "SP", cep: f.data.ship_cep || "", city: sr.origin_city || "", localFree: sr.local_free !== false };
+    }
   }
 
   // ---------- card ----------
@@ -419,7 +436,7 @@
     if (!box.hidden) { box.hidden = true; return; }
     const r = sheetCalc();
     logUse(r, "pix");
-    const extra = [discText(r), r.ship ? `frete ${r.ship.name} ${r.ship.fr ? "grátis" : money(r.ship.price)}` : ""].filter(Boolean).join(", ");
+    const extra = [discText(r), r.ship ? (r.ship.local ? "frete grátis" : `frete ${r.ship.name} ${r.ship.fr ? "grátis" : money(r.ship.price)}`) : ""].filter(Boolean).join(", ");
     renderPix(box, pixKey(cur.pix_key) || pixKey(cfg.pix_key), r.total, `${cur.name}${size ? ` (tamanho ${size})` : ""}${extra ? ` com ${extra.replace(/\n/g, ", ")}` : ""}`, cur.whatsapp);
     box.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   });
@@ -507,7 +524,7 @@
     const ds = discs(r);
     $("#bag-disc").innerHTML = ds.length || r.ship
       ? `<div><span>Subtotal</span><span>${money(r.sub)}</span></div>` + ds.map(([k, v]) => `<div class="d"><span>${esc(discName(k))}</span><span>-${money(v)}</span></div>`).join("")
-        + (r.ship ? `<div${r.ship.fr ? ' class="d"' : ""}><span>Frete ${r.ship.name}</span><span>${r.ship.fr ? "Grátis" : money(r.ship.price)}</span></div>` : "")
+        + (r.ship ? `<div${r.ship.fr || r.ship.local ? ' class="d"' : ""}><span>${r.ship.local ? "Frete" : `Frete ${r.ship.name}`}</span><span>${r.ship.fr || r.ship.local ? "Grátis" : money(r.ship.price)}</span></div>` : "")
       : "";
     shipBox("bag", r);
     couponMsg("bag", null);

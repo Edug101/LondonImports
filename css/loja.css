@@ -246,6 +246,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .ship-to { margin: 0; font-size: 14px; color: var(--ink-2); }
 .ship-o { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: #fff; }
 .ship-o:has(input:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.ship-o.on { border-color: #1d7a3e; box-shadow: inset 0 0 0 1px #1d7a3e; cursor: default; }
+.ship-o.on strong { color: #14532d; }
 .ship-o input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); flex: none; }
 .ship-o span { flex: 1; display: grid; line-height: 1.25; font-size: 15px; }
 .ship-o small { color: var(--ink-2); font-size: 13px; }

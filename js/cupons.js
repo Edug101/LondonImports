@@ -71,22 +71,23 @@ window.onProducts=list=>{const first=!started;started=true;prods=list;picked=new
 // Painel: tabela de frete por região (precisa do arquivo sql/frete.sql)
 (()=>{
 const $=id=>document.getElementById(id);
-let originUf="";
+let originUf="",originCity="";
+const localTxt=()=>{$("sh_local_t").textContent=`Frete grátis para quem é da mesma cidade da loja${originCity?` (${originCity}/${originUf})`:""}`};
 function draw(r){$("sh_rows").innerHTML=FRETE.ZONES.map(([k,n])=>`<tr><td>${n}${k==="same"&&originUf?` (${originUf})`:""}</td><td><input data-k="${k}" data-f="pac" type="number" min="0" step="0.01" value="${r[k].pac}"></td><td><input class="d" data-k="${k}" data-f="pac_d" type="number" min="0" step="1" value="${r[k].pac_d}"></td><td><input data-k="${k}" data-f="sedex" type="number" min="0" step="0.01" value="${r[k].sedex}"></td><td><input class="d" data-k="${k}" data-f="sedex_d" type="number" min="0" step="1" value="${r[k].sedex_d}"></td></tr>`).join("")}
 async function load(){
   const r=await db.from("settings").select("ship_cep,ship_rates").eq("id",1).single();
   if(r.error){$("sh_msg").textContent="Falta rodar o arquivo sql/frete.sql no Supabase.";draw(FRETE.rates(null));return}
-  originUf=(r.data.ship_rates&&r.data.ship_rates.origin_uf)||"";$("sh_cep").value=FRETE.fmt(r.data.ship_cep||"");draw(FRETE.rates(r.data.ship_rates))}
+  const sr=r.data.ship_rates||{};originUf=sr.origin_uf||"";originCity=sr.origin_city||"";$("sh_local").checked=sr.local_free!==false;localTxt();$("sh_cep").value=FRETE.fmt(r.data.ship_cep||"");draw(FRETE.rates(r.data.ship_rates))}
 $("sh_cep").oninput=e=>{e.target.value=FRETE.fmt(FRETE.cep(e.target.value))};
 $("sh_save").onclick=async()=>{
   const c=FRETE.cep($("sh_cep").value);
   if(c.length!==8){$("sh_msg").textContent="Digite o CEP da loja com 8 números.";return}
   $("sh_msg").textContent="Salvando...";
-  try{originUf=(await FRETE.lookup(c)).uf}catch(e){$("sh_msg").textContent="CEP da loja não encontrado.";return}
+  try{const o=await FRETE.lookup(c);originUf=o.uf;originCity=o.city;localTxt()}catch(e){$("sh_msg").textContent="CEP da loja não encontrado.";return}
   const raw={};document.querySelectorAll("#sh_rows input").forEach(i=>{(raw[i.dataset.k]||(raw[i.dataset.k]={}))[i.dataset.f]=i.value});
-  const rates={...FRETE.rates(raw),origin_uf:originUf};
+  const rates={...FRETE.rates(raw),origin_uf:originUf,origin_city:originCity,local_free:$("sh_local").checked};
   const r=await db.from("settings").update({ship_cep:c,ship_rates:rates}).eq("id",1);
-  $("sh_msg").textContent=r.error?"Erro ao salvar o frete (rode o sql/frete.sql no Supabase).":`Frete salvo. Envio saindo de ${originUf}.`;
+  $("sh_msg").textContent=r.error?"Erro ao salvar o frete (rode o sql/frete.sql no Supabase).":`Frete salvo. Envio saindo de ${originCity}/${originUf}.`;
   if(!r.error)draw(FRETE.rates(rates))};
 let started=false;const prev=window.onProducts;
 window.onProducts=list=>{prev&&prev(list);if(!started){started=true;load()}};
