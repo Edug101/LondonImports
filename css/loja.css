@@ -363,3 +363,9 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   .rv { opacity: 1; transform: none; }
   .feat-img img { clip-path: none; transform: none; }
 }
+
+/* celular: sem zoom sem querer (toque duplo e campo com letra menor que 16px) */
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+@media (max-width: 860px) {
+  input, select, textarea { font-size: 16px !important; }
+}
