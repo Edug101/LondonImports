@@ -13,6 +13,10 @@
   let cfg = { whatsapp: "", instagram: "", pix_key: "", pix_name: "", pix_city: "" };
   let promos = []; // "compre 2 ganhe 1" ativos (escolhidos no painel)
   let coupon = null; // cupom de % que o cliente digitou
+  let frees = []; // cupons de frete grátis acima de um valor
+  let shipCfg = { rates: FRETE.rates(null), origin: "SP" }; // tabela de frete do painel
+  let ship = null; // CEP do cliente: { cep, city, uf, svc }
+  try { ship = JSON.parse(sessionStorage.getItem("li-cep")) || null; } catch (err) { ship = null; }
   let tab = "Todos";
   let query = "";
 
@@ -43,10 +47,49 @@
     if (coupon) units.forEach((u) => { const p = pctFor(u.p); if (!u.free && p) add(coupon.code, r2(u.price * p / 100)); });
     const sub = r2(units.reduce((s, u) => s + u.price, 0));
     const off = r2(Object.values(used).reduce((s, v) => s + v, 0));
-    return { sub, used, total: r2(sub - off) };
+    const goods = r2(sub - off), sh = shipOf(goods);
+    if (sh && sh.fr && sh.price) add(sh.fr.code, sh.price); // frete grátis também entra no relatório
+    return { sub, used, goods, ship: sh, total: r2(goods + (sh ? sh.charged : 0)) };
   }
-  const discName = (code) => (promos.some((p) => p.code === code) ? "Compre 2 ganhe 1" : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
-  const discText = (r) => Object.entries(r.used).map(([k, v]) => `${discName(k)}: -${money(v)}`).join("\n");
+  // frete do CEP escolhido; PAC sai de graça quando a compra passa do valor do cupom
+  function shipOf(goods) {
+    if (!ship) return null;
+    const z = shipCfg.rates[FRETE.zoneOf(ship.uf, shipCfg.origin)];
+    if (!z) return null;
+    const fr = ship.svc === "pac" ? frees.find((f) => goods >= Number(f.min_total || 0)) : null;
+    const price = z[ship.svc];
+    return { name: ship.svc === "pac" ? "PAC" : "SEDEX", price, days: z[ship.svc + "_d"], fr, charged: fr ? 0 : price };
+  }
+  const isFree = (code) => frees.some((f) => f.code === code);
+  const discName = (code) => (isFree(code) ? "Frete grátis" : promos.some((p) => p.code === code) ? "Compre 2 ganhe 1" : `Cupom ${code} (-${coupon ? coupon.percent : 0}%)`);
+  const discs = (r) => Object.entries(r.used).filter(([k]) => !isFree(k));
+  const discText = (r) => discs(r).map(([k, v]) => `${discName(k)}: -${money(v)}`).join("\n");
+  const shipText = (r) => (r.ship ? `Frete ${r.ship.name} para ${ship.city}/${ship.uf} (CEP ${FRETE.fmt(ship.cep)}, até ${r.ship.days} dias úteis): ${r.ship.fr ? `grátis (era ${money(r.ship.price)})` : money(r.ship.price)}` : "");
+  function shipBox(k, r) {
+    const box = $(`#${k}-ship`);
+    $(`#${k}-cep`).value = ship ? FRETE.fmt(ship.cep) : $(`#${k}-cep`).value;
+    if (!ship) { if (!box.dataset.err) box.innerHTML = ""; return; }
+    delete box.dataset.err;
+    const z = shipCfg.rates[FRETE.zoneOf(ship.uf, shipCfg.origin)];
+    const fr = frees.find((f) => r.goods >= Number(f.min_total || 0));
+    const opt = (svc, n) => `<label class="ship-o"><input type="radio" name="${k}-svc" value="${svc}"${ship.svc === svc ? " checked" : ""}><span><b>${n}</b><small>até ${z[svc + "_d"]} dias úteis</small></span><strong>${svc === "pac" && fr ? "Grátis" : money(z[svc])}</strong></label>`;
+    const next = !fr && frees.length ? Number(frees[0].min_total || 0) - r.goods : 0;
+    box.innerHTML = `<p class="ship-to">Entrega para <b>${esc(ship.city)}/${esc(ship.uf)}</b></p>${opt("pac", "PAC")}${opt("sedex", "SEDEX")}`
+      + (next > 0 ? `<p class="ship-hint">Faltam ${money(next)} para ganhar frete grátis no PAC.</p>` : fr ? `<p class="ship-hint ok">Você ganhou frete grátis no PAC.</p>` : "")
+      + `<p class="ship-note">Valor estimado pelo Correios. Confirmamos no WhatsApp antes do envio.</p>`;
+  }
+  async function calcShip(k) {
+    const c = FRETE.cep($(`#${k}-cep`).value), box = $(`#${k}-ship`);
+    const err = (m) => { box.dataset.err = 1; box.innerHTML = `<p class="cupom-msg bad">${m}</p>`; };
+    if (c.length !== 8) { err("Digite o CEP com 8 números."); $(`#${k}-cep`).focus(); return; }
+    box.innerHTML = `<p class="cupom-msg">Calculando...</p>`;
+    try {
+      const a = await FRETE.lookup(c);
+      ship = { ...a, svc: ship ? ship.svc : "pac" };
+      try { sessionStorage.setItem("li-cep", JSON.stringify(ship)); } catch (e) { /* navegação privada */ }
+      refreshCoupon();
+    } catch (e) { ship = null; err("CEP não encontrado. Confira os números."); }
+  }
   // relatório do painel: guarda quanto cada cupom economizou (uma vez por pedido)
   const logged = new Set();
   function logUse(r, channel) {
@@ -87,19 +130,22 @@
 
   // ---------- dados ----------
   async function load() {
-    const [p, s, c] = await Promise.all([
+    const [p, s, c, f] = await Promise.all([
       db.from("products")
         .select("id,name,brand,category,description,price,old_price,sizes,image_url,images,whatsapp,pix_key,featured,popular,stock")
         .eq("active", true)
         .order("featured", { ascending: false })
         .order("created_at", { ascending: false }),
       db.from("settings").select("whatsapp,instagram,pix_key,pix_name,pix_city").eq("id", 1).single(),
-      db.from("coupons").select("code,kind,product_ids").eq("kind", "b2g1").eq("active", true),
+      db.from("coupons").select("*").in("kind", ["b2g1", "freeship"]).eq("active", true),
+      db.from("settings").select("ship_rates").eq("id", 1).single(),
     ]);
     if (p.error) throw p.error;
     all = p.data || [];
     if (s.data) cfg = s.data;
-    promos = c.data || [];
+    promos = (c.data || []).filter((x) => x.kind === "b2g1");
+    frees = (c.data || []).filter((x) => x.kind === "freeship").sort((a, b) => a.min_total - b.min_total);
+    if (f.data && f.data.ship_rates) shipCfg = { rates: FRETE.rates(f.data.ship_rates), origin: f.data.ship_rates.origin_uf || "SP" };
   }
 
   // ---------- card ----------
@@ -232,15 +278,16 @@
 
   const sheetCalc = () => calc([{ p: cur, qty: 1 }]);
   function buyLink() {
-    const r = sheetCalc(), off = Object.keys(r.used).length;
-    $("#p-wa").href = wa(`Olá! Tenho interesse em: ${cur.name}${size ? ` (tamanho ${size})` : ""} - ${money(r.sub)}${off ? `\n${discText(r)}\nTotal: ${money(r.total)}` : ""}`, cur.whatsapp);
+    const r = sheetCalc(), extra = [discText(r), shipText(r)].filter(Boolean).join("\n");
+    $("#p-wa").href = wa(`Olá! Tenho interesse em: ${cur.name}${size ? ` (tamanho ${size})` : ""} - ${money(r.sub)}${extra ? `\n${extra}\nTotal: ${money(r.total)}` : ""}`, cur.whatsapp);
   }
   function showPrice() {
     const r = sheetCalc(), p = pctFor(cur);
     $("#p-price").innerHTML = p
-      ? `<span class="price">${money(r.total)}</span><span class="old">${money(cur.price)}</span><span class="cup-tag">Cupom -${p}%</span>`
+      ? `<span class="price">${money(r.goods)}</span><span class="old">${money(cur.price)}</span><span class="cup-tag">Cupom -${p}%</span>`
       : `<span class="price">${money(cur.price)}</span>${hasOff(cur) ? `<span class="old">${money(cur.old_price)}</span>` : ""}`;
     buyLink();
+    shipBox("p", r);
     $("#p-pix").hidden = true;
   }
   const needSize = () => (cur.sizes || []).length > 0 && !size;
@@ -333,6 +380,16 @@
     buyLink();
   });
   $("#p-wa").addEventListener("click", (e) => { if (needSize()) { e.preventDefault(); askSize(); return; } logUse(sheetCalc(), "whatsapp"); });
+  ["p", "bag"].forEach((k) => {
+    $(`#${k}-cep-f`).addEventListener("submit", (e) => { e.preventDefault(); calcShip(k); });
+    $(`#${k}-cep`).addEventListener("input", (e) => { const v = FRETE.fmt(FRETE.cep(e.target.value)); if (v !== e.target.value) e.target.value = v; });
+    $(`#${k}-ship`).addEventListener("change", (e) => {
+      if (!ship || e.target.type !== "radio") return;
+      ship.svc = e.target.value;
+      try { sessionStorage.setItem("li-cep", JSON.stringify(ship)); } catch (err) { /* navegação privada */ }
+      refreshCoupon();
+    });
+  });
   ["p", "bag"].forEach((k) => $(`#${k}-cup-f`).addEventListener("submit", (e) => { e.preventDefault(); applyCoupon($(`#${k}-cup`), $(`#${k}-cup-msg`)); }));
   document.addEventListener("click", (e) => {
     if (!e.target.closest("[data-uncup]")) return;
@@ -352,7 +409,8 @@
     if (!box.hidden) { box.hidden = true; return; }
     const r = sheetCalc();
     logUse(r, "pix");
-    renderPix(box, pixKey(cur.pix_key) || pixKey(cfg.pix_key), r.total, `${cur.name}${size ? ` (tamanho ${size})` : ""}${Object.keys(r.used).length ? ` com ${discText(r).replace(/\n/g, ", ")}` : ""}`, cur.whatsapp);
+    const extra = [discText(r), r.ship ? `frete ${r.ship.name} ${r.ship.fr ? "grátis" : money(r.ship.price)}` : ""].filter(Boolean).join(", ");
+    renderPix(box, pixKey(cur.pix_key) || pixKey(cfg.pix_key), r.total, `${cur.name}${size ? ` (tamanho ${size})` : ""}${extra ? ` com ${extra.replace(/\n/g, ", ")}` : ""}`, cur.whatsapp);
     box.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
   });
 
@@ -436,8 +494,12 @@
     });
     $("#open-bag").setAttribute("aria-label", `Abrir sacola, ${count} ${count === 1 ? "item" : "itens"}`);
     $("#bag-total").textContent = money(total);
-    const ds = Object.entries(r.used);
-    $("#bag-disc").innerHTML = ds.length ? `<div><span>Subtotal</span><span>${money(r.sub)}</span></div>` + ds.map(([k, v]) => `<div class="d"><span>${esc(discName(k))}</span><span>-${money(v)}</span></div>`).join("") : "";
+    const ds = discs(r);
+    $("#bag-disc").innerHTML = ds.length || r.ship
+      ? `<div><span>Subtotal</span><span>${money(r.sub)}</span></div>` + ds.map(([k, v]) => `<div class="d"><span>${esc(discName(k))}</span><span>-${money(v)}</span></div>`).join("")
+        + (r.ship ? `<div${r.ship.fr ? ' class="d"' : ""}><span>Frete ${r.ship.name}</span><span>${r.ship.fr ? "Grátis" : money(r.ship.price)}</span></div>` : "")
+      : "";
+    shipBox("bag", r);
     couponMsg("bag", null);
     $("#bag-f").hidden = !ls.length;
     $("#bag-items").innerHTML = ls.length ? ls.map((b) => `
@@ -459,7 +521,7 @@
     // se todas as peças são do mesmo vendedor, o pedido vai pro WhatsApp dele; senão, da loja
     const sellers = [...new Set(ls.map((b) => digits(b.p.whatsapp) || digits(cfg.whatsapp)))];
     const seller = sellers.length === 1 ? sellers[0] : cfg.whatsapp;
-    $("#bag-wa").href = wa(`Olá! Quero fazer este pedido:\n\n${txt}${ds.length ? `\n\nSubtotal: ${money(r.sub)}\n${discText(r)}` : ""}\n\nTotal: ${money(total)}\n\nPode confirmar a disponibilidade?`, seller);
+    $("#bag-wa").href = wa(`Olá! Quero fazer este pedido:\n\n${txt}${ds.length || r.ship ? `\n\nSubtotal: ${money(r.sub)}\n${[discText(r), shipText(r)].filter(Boolean).join("\n")}` : ""}\n\nTotal: ${money(total)}\n\nPode confirmar a disponibilidade?`, seller);
     // Pix da sacola só aparece quando todas as peças usam a mesma chave
     const keys = [...new Set(ls.map((b) => pixKey(b.p.pix_key) || pixKey(cfg.pix_key)))];
     const pk = keys.length === 1 ? keys[0] : "";

@@ -178,6 +178,12 @@
           <button>Aplicar</button>
         </form>
         <p class="cupom-msg" id="p-cup-msg" aria-live="polite"></p>
+        <form class="cupom frete-f" id="p-cep-f" novalidate>
+          <label class="sr" for="p-cep">CEP para calcular o frete</label>
+          <input id="p-cep" inputmode="numeric" placeholder="Calcular frete: seu CEP" maxlength="9" autocomplete="postal-code">
+          <button>Calcular</button>
+        </form>
+        <div class="ship" id="p-ship" aria-live="polite"></div>
         <button class="btn ghost full" id="p-pixb" hidden>Pagar com Pix</button>
       </div>
       <p class="p-sold" id="p-sold" hidden>Esgotado. <a id="p-sold-wa" href="#" target="_blank" rel="noopener">Chame no WhatsApp</a> para saber quando volta.</p>
@@ -206,6 +212,12 @@
         <button>Aplicar</button>
       </form>
       <p class="cupom-msg" id="bag-cup-msg" aria-live="polite"></p>
+      <form class="cupom frete-f" id="bag-cep-f" novalidate>
+        <label class="sr" for="bag-cep">CEP para calcular o frete</label>
+        <input id="bag-cep" inputmode="numeric" placeholder="Calcular frete: seu CEP" maxlength="9" autocomplete="postal-code">
+        <button>Calcular</button>
+      </form>
+      <div class="ship" id="bag-ship" aria-live="polite"></div>
       <button class="btn ghost full" id="bag-pixb" hidden>Pagar com Pix</button>
       <div class="pix" id="bag-pix" hidden></div>
       <p class="bag-hint">Confirmamos a disponibilidade antes do envio.</p>
@@ -219,6 +231,6 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="js/config.js"></script>
 <script src="js/util.js"></script>
-<script src="js/loja.js"></script>
+<script src="js/frete.js"></script><script src="js/loja.js"></script>
 </body>
 </html>

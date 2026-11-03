@@ -7,7 +7,7 @@ const code=s=>String(s??"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase(
 let prods=[],coupons=[],picked=new Set(),started=false;
 
 $("c_pct").innerHTML=PCTS.map(p=>`<option value="${p}">${p}% de desconto</option>`).join("");
-$("c_kind").onchange=()=>{$("c_pct_l").hidden=$("c_kind").value!=="percent"};
+$("c_kind").onchange=()=>{const k=$("c_kind").value;$("c_pct_l").hidden=k!=="percent";$("c_min_l").hidden=k!=="freeship";$("c_prods").hidden=k==="freeship"};
 $("c_code").oninput=e=>{const v=code(e.target.value);if(v!==e.target.value)e.target.value=v};
 
 function drawPicker(){
@@ -16,12 +16,13 @@ function drawPicker(){
 $("c_list").onchange=e=>{const v=e.target.value;e.target.checked?picked.add(v):picked.delete(v);drawPicker()};
 $("c_all").onclick=()=>{picked=picked.size===prods.length?new Set():new Set(prods.map(x=>x.id));drawPicker()};
 
-const label=c=>c.kind==="b2g1"?"Compre 2 ganhe 1":`${c.percent}% de desconto`;
+const label=c=>c.kind==="b2g1"?"Compre 2 ganhe 1":c.kind==="freeship"?`Frete grátis (PAC) acima de ${money(c.min_total)}`:`${c.percent}% de desconto`;
 const nameOf=id=>(prods.find(p=>p.id===id)||{}).name;
 function drawRows(){
   $("c_rows").innerHTML=coupons.length?coupons.map(c=>{
     const names=c.product_ids.map(nameOf).filter(Boolean);
-    return `<div class="row c-row"><div><b>${esc(c.code)}</b>${c.active?"":' <span class="tag">pausado</span>'}<br><small>${label(c)} · ${names.length===prods.length&&prods.length?"todos os produtos":names.length+" produto"+(names.length===1?"":"s")}</small>${names.length&&names.length<prods.length?`<small class="c-names">${names.map(esc).join(", ")}</small>`:""}</div><button data-t="${esc(c.id)}">${c.active?"Pausar":"Ativar"}</button><button data-d="${esc(c.id)}">Excluir</button></div>`}).join("")
+    const scope=c.kind==="freeship"?"pedido todo":names.length===prods.length&&prods.length?"todos os produtos":names.length+" produto"+(names.length===1?"":"s");
+    return `<div class="row c-row"><div><b>${esc(c.code)}</b>${c.active?"":' <span class="tag">pausado</span>'}<br><small>${label(c)} · ${scope}</small>${c.kind!=="freeship"&&names.length&&names.length<prods.length?`<small class="c-names">${names.map(esc).join(", ")}</small>`:""}</div><button data-t="${esc(c.id)}">${c.active?"Pausar":"Ativar"}</button><button data-d="${esc(c.id)}">Excluir</button></div>`}).join("")
     :'<p class="msg">Nenhum cupom ainda.</p>'}
 
 async function loadCoupons(){
@@ -56,12 +57,37 @@ $("c_rows").onclick=async e=>{const d=e.target.dataset;
 $("c_form").onsubmit=async e=>{e.preventDefault();
   const c=code($("c_code").value),kind=$("c_kind").value;
   if(c.length<2){$("c_msg").textContent="Dê um nome ao cupom (letras e números, sem espaço).";return}
-  if(!picked.size){$("c_msg").textContent="Escolha pelo menos um produto.";return}
-  const row={code:c,kind,percent:kind==="percent"?+$("c_pct").value:null,product_ids:[...picked],active:true};
+  if(kind!=="freeship"&&!picked.size){$("c_msg").textContent="Escolha pelo menos um produto.";return}
+  const min=Math.max(0,Math.min(1000000,+$("c_min").value||0));
+  const row={code:c,kind,percent:kind==="percent"?+$("c_pct").value:null,min_total:kind==="freeship"?min:null,product_ids:kind==="freeship"?[]:[...picked],active:true};
   const r=await db.from("coupons").insert(row);
-  if(r.error){$("c_msg").textContent=r.error.code==="23505"?"Já existe um cupom com esse nome.":"Erro ao salvar o cupom: "+r.error.message;return}
-  $("c_msg").textContent=`Cupom ${c} criado.`;$("c_form").reset();$("c_pct_l").hidden=false;picked=new Set();drawPicker();loadCoupons()};
+  if(r.error){$("c_msg").textContent=r.error.code==="23505"?"Já existe um cupom com esse nome.":/min_total|coupons_ck/.test(r.error.message)?"Falta rodar o arquivo sql/frete.sql no Supabase.":"Erro ao salvar o cupom: "+r.error.message;return}
+  $("c_msg").textContent=`Cupom ${c} criado.`;$("c_form").reset();$("c_kind").onchange();picked=new Set();drawPicker();loadCoupons()};
 
 // o admin.js avisa quando a lista de produtos carrega
 window.onProducts=list=>{const first=!started;started=true;prods=list;picked=new Set([...picked].filter(id=>list.some(p=>p.id===id)));drawPicker();first?loadCoupons():drawRows()};
+})();
+
+// Painel: tabela de frete por região (precisa do arquivo sql/frete.sql)
+(()=>{
+const $=id=>document.getElementById(id);
+let originUf="";
+function draw(r){$("sh_rows").innerHTML=FRETE.ZONES.map(([k,n])=>`<tr><td>${n}${k==="same"&&originUf?` (${originUf})`:""}</td><td><input data-k="${k}" data-f="pac" type="number" min="0" step="0.01" value="${r[k].pac}"></td><td><input class="d" data-k="${k}" data-f="pac_d" type="number" min="0" step="1" value="${r[k].pac_d}"></td><td><input data-k="${k}" data-f="sedex" type="number" min="0" step="0.01" value="${r[k].sedex}"></td><td><input class="d" data-k="${k}" data-f="sedex_d" type="number" min="0" step="1" value="${r[k].sedex_d}"></td></tr>`).join("")}
+async function load(){
+  const r=await db.from("settings").select("ship_cep,ship_rates").eq("id",1).single();
+  if(r.error){$("sh_msg").textContent="Falta rodar o arquivo sql/frete.sql no Supabase.";draw(FRETE.rates(null));return}
+  originUf=(r.data.ship_rates&&r.data.ship_rates.origin_uf)||"";$("sh_cep").value=FRETE.fmt(r.data.ship_cep||"");draw(FRETE.rates(r.data.ship_rates))}
+$("sh_cep").oninput=e=>{e.target.value=FRETE.fmt(FRETE.cep(e.target.value))};
+$("sh_save").onclick=async()=>{
+  const c=FRETE.cep($("sh_cep").value);
+  if(c.length!==8){$("sh_msg").textContent="Digite o CEP da loja com 8 números.";return}
+  $("sh_msg").textContent="Salvando...";
+  try{originUf=(await FRETE.lookup(c)).uf}catch(e){$("sh_msg").textContent="CEP da loja não encontrado.";return}
+  const raw={};document.querySelectorAll("#sh_rows input").forEach(i=>{(raw[i.dataset.k]||(raw[i.dataset.k]={}))[i.dataset.f]=i.value});
+  const rates={...FRETE.rates(raw),origin_uf:originUf};
+  const r=await db.from("settings").update({ship_cep:c,ship_rates:rates}).eq("id",1);
+  $("sh_msg").textContent=r.error?"Erro ao salvar o frete (rode o sql/frete.sql no Supabase).":`Frete salvo. Envio saindo de ${originUf}.`;
+  if(!r.error)draw(FRETE.rates(rates))};
+let started=false;const prev=window.onProducts;
+window.onProducts=list=>{prev&&prev(list);if(!started){started=true;load()}};
 })();

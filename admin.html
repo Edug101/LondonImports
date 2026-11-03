@@ -90,13 +90,24 @@
           </div>
         </section>
 
+        <section class="box" id="frete">
+          <h2>Frete</h2>
+          <p class="note top">Preço por região, contando a partir do CEP da loja. Use os valores do Correios para um pacote de relógio (até 1 kg).</p>
+          <div class="f">
+            <label class="full">CEP de onde sai o envio<input id="sh_cep" inputmode="numeric" maxlength="9" placeholder="00000-000"></label>
+          </div>
+          <div class="rep ship-t"><table><thead><tr><th>Região</th><th>PAC R$</th><th>Dias</th><th>SEDEX R$</th><th>Dias</th></tr></thead><tbody id="sh_rows"></tbody></table></div>
+          <div class="f"><button class="btn" id="sh_save" type="button">Salvar frete</button><p class="msg" id="sh_msg"></p></div>
+        </section>
+
         <section class="box" id="cupons">
           <h2>Relatórios e cupons</h2>
           <form class="f" id="c_form">
             <label>Nome do cupom<input id="c_code" maxlength="30" placeholder="EX: LONDON10" autocomplete="off" required></label>
-            <label>Tipo<select id="c_kind"><option value="percent">Desconto em %</option><option value="b2g1">Compre 2 ganhe 1</option></select></label>
+            <label>Tipo<select id="c_kind"><option value="percent">Desconto em %</option><option value="b2g1">Compre 2 ganhe 1</option><option value="freeship">Frete grátis acima de um valor</option></select></label>
             <label class="full" id="c_pct_l">Desconto<select id="c_pct"></select></label>
-            <div class="full c-prods">
+            <label class="full" id="c_min_l" hidden>Frete grátis em compras a partir de (R$)<input id="c_min" type="number" min="0" max="1000000" step="0.01" value="500"></label>
+            <div class="full c-prods" id="c_prods">
               <div class="c-prods-h"><span>Vale para quais produtos?</span><button type="button" class="link" id="c_all">Marcar todos</button></div>
               <div id="c_list" class="c-list"></div>
             </div>
@@ -117,6 +128,6 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script><script src="js/util.js"></script><script src="js/admin.js"></script><script src="js/cupons.js"></script>
+<script src="js/config.js"></script><script src="js/util.js"></script><script src="js/admin.js"></script><script src="js/frete.js"></script><script src="js/cupons.js"></script>
 </body>
 </html>

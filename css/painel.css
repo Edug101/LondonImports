@@ -100,6 +100,11 @@ h1, h2 { margin: 0; line-height: 1.15; }
 .rep tr.use td { padding: 6px 8px; background: var(--bg); font-size: 13px; }
 .rep tr.use td:first-child { display: flex; align-items: center; gap: 12px; padding-left: 18px; }
 .rep tr.use small { display: inline; }
+.note.top { margin: -8px 0 14px; }
+.ship-t { margin: 14px 0; }
+.ship-t td { padding: 6px 4px; }
+.ship-t input { width: 76px; min-height: 40px; padding: 8px; border: 1px solid #8a8478; border-radius: 8px; font: inherit; }
+.ship-t input.d { width: 52px; }
 .rep + .link { margin-top: 10px; font-size: 13px; }
 
 @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
