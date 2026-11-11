@@ -280,6 +280,15 @@
 
   function renderAll() {
     renderFeatured(); renderTabs(); renderGrid(); renderBest();
+    // aviso de frete grátis no topo: aparece só com o cupom de frete grátis ativo no painel
+    const fr = frees[0];
+    const hs = $("#hero-ship");
+    if (fr && hs.hidden) {
+      hs.innerHTML = Number(fr.min_total) > 0 ? `Frete grátis <b>em compras acima de ${money(fr.min_total)}</b>` : "Frete grátis em todas as compras";
+      // entra com a mesma animação do resto do topo
+      hs.classList.remove("in"); hs.hidden = false; void hs.offsetWidth;
+      setTimeout(() => hs.classList.add("in"), 30);
+    } else if (!fr) hs.hidden = true;
     const hello = wa("Olá! Vim pelo site da London Imports.");
     ["#hero-wa", "#ft-wa", "#mb-wa"].forEach((s) => ($(s).href = hello));
     const ig = handle(cfg.instagram);

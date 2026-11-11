@@ -72,6 +72,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .hero-in { max-width: var(--max); margin: 0 auto; padding: clamp(28px, 5vw, 64px) var(--pad); display: grid; grid-template-columns: 1.1fr .9fr; gap: clamp(24px, 5vw, 72px); align-items: center; }
 .hero h1 { font-size: clamp(2.1rem, 4.6vw, 3.8rem); font-weight: 700; letter-spacing: -.02em; max-width: 14ch; }
 .hero p { font-size: 18px; color: var(--ink-2); max-width: 46ch; margin: 18px 0 28px; }
+.hero .hero-ship { margin: 0 0 14px; font-size: clamp(18px, 2vw, 22px); font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: .02em; }
+.hero-ship b { font-weight: 800; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
 .feat { display: block; width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: 0 24px 50px -30px rgba(0,0,0,.35); transition: transform .4s var(--ease), box-shadow .4s var(--ease); }
 .feat:not(:disabled):hover { transform: translateY(-4px); box-shadow: 0 30px 60px -30px rgba(0,0,0,.45); }
